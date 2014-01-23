@@ -16,6 +16,11 @@
 #include <LiquidCrystal.h>
 #include <Thermal.h>
 
+// wait times, in ms
+
+const int pollForOrders = 30000;
+const int waitEthernetOn = 1000;
+
 // LCD stuff
 
 LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
@@ -55,11 +60,12 @@ EthernetClient client;
  The logic is:
  1) request the list of orders
  2) process the list until connection ends. If any are pending, add to a queue to print.
-    If no orders are pending, wait 1 minute, then go back to (1).
+    If no orders are pending, wait 1 minute, then go back to (1). If more than 10 orders are
+    pending, ignore the rest.
  3) if there are items to print, take top print request from queue and request it. Otherwise go to (0)
  4) process the return data (send to printer and display), until connection ends. Send the ‘processing’ message, and go to (3).
 
- All processed in the loop.
+ All return data is processed in loop()
 
 */
 
@@ -69,8 +75,12 @@ const int requestOrders = 1; // issue request for list of orders
 const int processOrderList = 2; // process the return data
 const int requestPrint = 3; // issue request for an order to print
 const int processPrintData = 4; // process the return data (and display and print it)
+const int reportProcessing = 5; // report that an order is processing
+const int processReportData = 6;  // ignore returned data
 
 int processStep = requestOrders;
+
+int order = 0; // number of order being processed
 
 void setup() {
  // set up LCD
@@ -97,26 +107,10 @@ void setup() {
     Ethernet.begin(mac, ip);
   }
   // give the Ethernet shield a second to initialize:
-  delay(1000);
+  delay(waitEthernetOn);
   Serial.println("connecting...");
 
-  // if you get a connection, report back via serial:
-  if (client.connect(server, 80)) {
-    Serial.println("connected");
-    // Make a HTTP request:
-    client.println("GET /arduino1.php?sc=1234 HTTP/1.1");
-    client.println("Host: 87.51.52.114");
-    client.println("Connection: close");
-    client.println();
-  }
-  else {
-    // kf you didn't get a connection to the server:
-    Serial.println("connection failed");
-  }
-}
-
-void checkOrders() {
-
+  checkOrders();
 }
 
 int a[3];
@@ -134,12 +128,98 @@ int matched = 0;
 char matchString[] = "html";
 const int matchLen = 4;
 
-int toPrint[10]; // assume no more than 10 pending orders in one print update
+const int maxNumToPrint = 1; // Print only this many orders in a batch
+int toPrint[maxNumToPrint];
 int numToPrint = 0;
 
-// add an order to the print queue
+// Check orders
+void checkOrders() {
+  // if you get a connection, report back via serial:
+  if (client.connect(server, 80)) {
+    Serial.println("connected for orders");
+    // Make a HTTP request:
+    client.println("GET /arduino1.php?sc=1234 HTTP/1.1");
+    client.println("Host: 87.51.52.114");
+    client.println("Connection: close");
+    client.println();
+    processStep=processOrderList;
+    }
+  else {
+    // if you didn't get a connection to the server:
+    Serial.println("connection failed");
+    }
+  }
+
+// Print order (if any are in queue)
+//
+// retrieve data (e.g. http://87.51.52.114/arduino3.php?sc=1234&o=69)
+// send the result to the printer/display
+// and call http://87.51.52.114/arduino4.php?sc=1234&o=69&s=processing
+
+void printOrder() {
+  if (numToPrint<1) return;
+  order = getOrderToPrint();
+
+  // if you get a connection, report back via serial:
+  if (client.connect(server, 80)) {
+    Serial.println("connected for print");
+    // Make a HTTP request:
+    client.print("GET /arduino3.php?sc=1234&o=");
+    client.print(order);
+    client.println(" HTTP/1.1");
+    client.println("Host: 87.51.52.114");
+    client.println("Connection: close");
+    client.println();
+    processStep=processPrintData;
+    //printer.wake();
+    Serial.println("*** START PRINTING ***");
+
+    }
+  else {
+    // if you didn't get a connection to the server:
+    Serial.println("connection failed");
+    }
+  }
+
+
+// Report processing of an order
+//
+// call http://87.51.52.114/arduino4.php?sc=1234&o=69&s=processing
+//
+// relies on global order to be the number of the order being processed
+
+void reportProcessingOrder() {
+
+  // if you get a connection, report back via serial:
+  if (client.connect(server, 80)) {
+    Serial.println("connected for print");
+    // Make a HTTP request:
+    client.print("GET /arduino4.php?sc=1234&o=");
+    client.print(order);
+    client.println("&s=processing HTTP/1.1");
+    client.println("Host: 87.51.52.114");
+    client.println("Connection: close");
+    client.println();
+    processStep=processReportData;
+    Serial.print("Reporting order ");
+    Serial.print(order);
+    Serial.println(" processed.");
+    }
+  else {
+    // if you didn't get a connection to the server:
+    Serial.println("connection failed");
+    }
+  }
+
+// add an order to the print queue. If maxed out, ignore it.
 
 void addToPrint(int order) {
+  Serial.print("Recording order ");
+  Serial.println(order);
+  if (numToPrint>= maxNumToPrint) {
+    Serial.println("*** ignoring ***");
+    return;
+    }
   toPrint[numToPrint]=order;
   ++numToPrint;
   }
@@ -147,9 +227,14 @@ void addToPrint(int order) {
 // return an order to print, or -1 if there are no more orders to print
 
 int getOrderToPrint() {
-  if (numToPrint <1) return -1;
+  if (numToPrint <1) {
+    Serial.println("*** Something from nothing ***");
+    return -1;
+    }
   return toPrint[--numToPrint];
   }
+
+// Loop processing incoming data
 
 void loop()
 {
@@ -159,6 +244,14 @@ void loop()
   if (client.available()) {
     char c = client.read();
     Serial.print(c);
+
+    // if processing print data, just send it to the printer
+    if (processStep==processPrintData) {
+      //printer.print(c);
+      }
+
+    // if processing order list, parse out orders and queue them to print
+    if (processStep==processOrderList) {
 
       if (state == 0) { // skipping header
         if (c == matchString[matched]) {
@@ -182,6 +275,7 @@ void loop()
           Serial.print(" status ");
           Serial.println(a[1]);
           Serial.println();
+          if (a[1]==1) addToPrint(a[0]);
           numArgs = -1;
           a[0]=0;
           a[1]=0;
@@ -206,6 +300,7 @@ void loop()
 
       if (state == 2) {
       }
+    }
 
   }
 
@@ -215,16 +310,22 @@ void loop()
     Serial.println("disconnecting.");
     client.stop();
 
-    // do nothing forevermore:
-    while(true);
+    // wait 30 seconds, then check for orders
+
+    if (processStep==processPrintData) {
+      Serial.println("*** END PRINTING ***");
+      //printer.sleep();
+      reportProcessingOrder();  // and report that it's done
+      }
+
+    // When done reporting an order processed, move on to the next one
+    if (processStep == processReportData) {
+      order = 0;
+      if (numToPrint>0) printOrder();
+      }
+
+    delay(pollForOrders);
+    processStep = pollForOrders;
+    checkOrders();
   }
 }
-
-// for each pending order
-//
-// retrieve data (e.g. http://87.51.52.114/arduino3.php?sc=1234&o=69)
-// send the result to the printer/display
-// and call  http://87.51.52.114/arduino4.php?sc=1234&o=69&s=processing
-void PrintOrder(int order) {
-  printer.wake();
-  }
