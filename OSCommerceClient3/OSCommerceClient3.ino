@@ -16,10 +16,12 @@
 #include <LiquidCrystal.h>
 #include <Thermal.h>
 
+String customerID = "1234"; // unique for each customer
+
 // wait times, in ms
 
-const int pollForOrders = 30000;
-const int waitEthernetOn = 1000;
+int waitPollForOrders = 30000;
+int waitEthernetOn = 1000;
 
 // LCD stuff
 
@@ -27,8 +29,8 @@ LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
 
 // printer stuff
 
-int printer_RX_Pin = 2;
-int printer_TX_Pin = 3;
+const int printer_RX_Pin = 2;
+const int printer_TX_Pin = 3;
 
 Thermal printer(printer_RX_Pin, printer_TX_Pin, 19200);
 
@@ -41,7 +43,7 @@ byte mac[] = {
 // if you don't want to use DNS (and reduce your sketch size)
 // use the numeric IP instead of the name for the server:
 //IPAddress server(87,51,52,114); // OSCommerce server
-char server[] = "87.51.52.114";    // name address for server (using DNS)
+const char server[] = "87.51.52.114";    // name address for server (using DNS)
 
 // Set the static IP address to use if the DHCP fails to assign
 IPAddress ip(192,168,1,229);
@@ -138,8 +140,8 @@ void checkOrders() {
   if (client.connect(server, 80)) {
     Serial.println("connected for orders");
     // Make a HTTP request:
-    client.println("GET /arduino1.php?sc=1234 HTTP/1.1");
-    client.println("Host: 87.51.52.114");
+    client.print("GET /arduino1.php?sc="); client.print(customerID); client.println(" HTTP/1.1");
+    client.print("Host: "); client.println(server);
     client.println("Connection: close");
     client.println();
     processStep=processOrderList;
@@ -324,8 +326,8 @@ void loop()
       if (numToPrint>0) printOrder();
       }
 
-    delay(pollForOrders);
-    processStep = pollForOrders;
+    delay(waitPollForOrders);
+    processStep = requestOrders;
     checkOrders();
   }
 }
