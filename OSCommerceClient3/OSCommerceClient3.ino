@@ -219,17 +219,29 @@ void reportProcessingOrder() {
 
 void loop()
 {
-  showProcessingStep();
+  //showProcessingStep(); // for debugging fun
   // if there are incoming bytes available
   // from the server, read them and print them:
   if (client.available()) {
     char c = client.read();
-    //Serial.print(c);
+    Serial.print(c);
 
     // if processing print data, just send it to the printer
     if (processStep==processPrintData) {
-      //printer.print(c);
-      Serial.print(c);
+      if (state == 0) { // skipping header
+        if (c == matchString[matched]) {
+          ++matched;
+          }
+        else {
+          matched = 0;
+          }
+        if (matched>=matchLen) setParseState(inArgs);
+      }
+
+      if (state == inArgs) {
+        //printer.print(c);
+        Serial.print(c);
+        }
       }
 
     // if processing order list, parse out orders and queue them to print
@@ -246,10 +258,10 @@ void loop()
 //          if (matched>0) Serial.println("No match."); // end matching
           matched = 0;
           }
-        if (matched>=matchLen) state=inArgs;
+        if (matched>=matchLen) setParseState(inArgs);
       }
 
-      if (state == 1) {
+      if (state == inArgs) {
         if (c == '<') { // end of line (order number and status)
           // Serial.println();
           // Serial.print(F("Processing order "));
@@ -257,7 +269,7 @@ void loop()
           // Serial.print(" status ");
           // Serial.println(a[1]);
           // Serial.println();
-          if (a[1]==1) addToPrint(a[0]);
+          if (a[1]==1) addToPrint(a[0]); // if pending, add to queue to print
           numArgs = -1;
           a[0]=0;
           a[1]=0;
@@ -269,7 +281,7 @@ void loop()
             }
           a[numArgs] = a[numArgs]*10+c-'0'; // add digit to int
           }
-        else {
+        else { // not a digit
           if (inNum) {
             inNum = 0;
 //            Serial.print(F("arg "));
@@ -289,25 +301,34 @@ void loop()
 
   // if the server's disconnected, stop the client:
   if (!client.connected()) {
+    setParseState(0);
+
     Serial.println();
     Serial.println("disconnecting.");
     client.stop();
 
-    // wait 30 seconds, then check for orders
+    showProcessingStep();
 
+    // If there are any queued to print, print one
+    if (processStep==processOrderList) {
+      if (numToPrint>0) printOrder();
+    }
+
+    // If we were printing, stop printing and put printer to sleep
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
       //printer.sleep();
       setProcessStep(reportProcessing);
-      reportProcessingOrder();  // and report that it's done
+      reportProcessingOrder();  // and report that the order is being processed
       }
 
-    // When done reporting an order processed, move on to the next one
+    // When done reporting an order processed, move on to print the next order
     if (processStep == processReportData) {
       order = 0;
-      if (numToPrint>0) printOrder();
+      if (numToPrint>0) printOrder(); // if any more to print, do one
       }
 
+    // if there's nothing else to do, wait 30 seconds, then check for orders
     delay(waitPollForOrders);
     setProcessStep(requestOrders);
     checkOrders();
@@ -338,17 +359,23 @@ int getOrderToPrint() {
   return toPrint[--numToPrint];
   }
 
+void setParseState(int s) {
+  state = s;
+  Serial.print("   Set parse state: ");
+  Serial.println(state);
+  }
+
 void setProcessStep(int s) {
   processStep = s;
-  Serial.print("Set process Step: ");
+  Serial.print("   Set process Step: ");
   Serial.println(processStep);
   }
 
 void showProcessingStep() {
-  Serial.print("Step: ");
+  Serial.print("   Step: ");
   Serial.print(processStep);
   Serial.print(" State: ");
-  Serial.println(state);
+  Serial.print(state);
   Serial.print(" queue: ");
   Serial.println(numToPrint);
   }
