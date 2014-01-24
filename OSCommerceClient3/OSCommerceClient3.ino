@@ -80,7 +80,7 @@ const int processPrintData = 4; // process the return data (and display and prin
 const int reportProcessing = 5; // report that an order is processing
 const int processReportData = 6;  // ignore returned data
 
-int processStep = requestOrders;
+int processStep;
 
 int order = 0; // number of order being processed
 
@@ -130,7 +130,7 @@ int matched = 0;
 char matchString[] = "html";
 const int matchLen = 4;
 
-const int maxNumToPrint = 1; // Print only this many orders in a batch
+const int maxNumToPrint = 2; // Print only this many orders in a batch
 int toPrint[maxNumToPrint];
 int numToPrint = 0;
 
@@ -144,7 +144,7 @@ void checkOrders() {
     client.print("Host: "); client.println(server);
     client.println("Connection: close");
     client.println();
-    processStep=processOrderList;
+    setProcessStep(processOrderList);
     }
   else {
     // if you didn't get a connection to the server:
@@ -172,7 +172,7 @@ void printOrder() {
     client.println("Host: 87.51.52.114");
     client.println("Connection: close");
     client.println();
-    processStep=processPrintData;
+    setProcessStep(processPrintData);
     //printer.wake();
     Serial.println("*** START PRINTING ***");
 
@@ -194,6 +194,10 @@ void reportProcessingOrder() {
 
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
+    Serial.print("Reporting order ");
+    Serial.print(order);
+    Serial.println(" processed.");
+
     Serial.println("connected for print");
     // Make a HTTP request:
     client.print("GET /arduino4.php?sc=1234&o=");
@@ -202,10 +206,8 @@ void reportProcessingOrder() {
     client.println("Host: 87.51.52.114");
     client.println("Connection: close");
     client.println();
-    processStep=processReportData;
-    Serial.print("Reporting order ");
-    Serial.print(order);
-    Serial.println(" processed.");
+
+    setProcessStep(processReportData); // so we process the return data properly
     }
   else {
     // if you didn't get a connection to the server:
@@ -213,43 +215,21 @@ void reportProcessingOrder() {
     }
   }
 
-// add an order to the print queue. If maxed out, ignore it.
-
-void addToPrint(int order) {
-  Serial.print("Recording order ");
-  Serial.println(order);
-  if (numToPrint>= maxNumToPrint) {
-    Serial.println("*** ignoring ***");
-    return;
-    }
-  toPrint[numToPrint]=order;
-  ++numToPrint;
-  }
-
-// return an order to print, or -1 if there are no more orders to print
-
-int getOrderToPrint() {
-  if (numToPrint <1) {
-    Serial.println("*** Something from nothing ***");
-    return -1;
-    }
-  return toPrint[--numToPrint];
-  }
-
 // Loop processing incoming data
 
 void loop()
 {
-
+  showProcessingStep();
   // if there are incoming bytes available
   // from the server, read them and print them:
   if (client.available()) {
     char c = client.read();
-    Serial.print(c);
+    //Serial.print(c);
 
     // if processing print data, just send it to the printer
     if (processStep==processPrintData) {
       //printer.print(c);
+      Serial.print(c);
       }
 
     // if processing order list, parse out orders and queue them to print
@@ -271,12 +251,12 @@ void loop()
 
       if (state == 1) {
         if (c == '<') { // end of line (order number and status)
-          Serial.println();
-          Serial.print(F("Processing order "));
-          Serial.print(a[0]);
-          Serial.print(" status ");
-          Serial.println(a[1]);
-          Serial.println();
+          // Serial.println();
+          // Serial.print(F("Processing order "));
+          // Serial.print(a[0]);
+          // Serial.print(" status ");
+          // Serial.println(a[1]);
+          // Serial.println();
           if (a[1]==1) addToPrint(a[0]);
           numArgs = -1;
           a[0]=0;
@@ -301,8 +281,9 @@ void loop()
         }
 
       if (state == 2) {
+        Serial.print(c);
+        }
       }
-    }
 
   }
 
@@ -317,6 +298,7 @@ void loop()
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
       //printer.sleep();
+      setProcessStep(reportProcessing);
       reportProcessingOrder();  // and report that it's done
       }
 
@@ -327,7 +309,46 @@ void loop()
       }
 
     delay(waitPollForOrders);
-    processStep = requestOrders;
+    setProcessStep(requestOrders);
     checkOrders();
   }
 }
+
+// add an order to the print queue. If maxed out, ignore it.
+
+void addToPrint(int order) {
+  if (numToPrint>= maxNumToPrint) {
+    //Serial.println("*** ignoring ***");
+    }
+  else {
+    Serial.print("*** Recorded order ");
+    Serial.println(order);
+    toPrint[numToPrint]=order;
+    ++numToPrint;
+    }
+  }
+
+// return an order to print, or -1 if there are no more orders to print
+
+int getOrderToPrint() {
+  if (numToPrint <1) {
+    Serial.println("*** Something from nothing ***");
+    return -1;
+    }
+  return toPrint[--numToPrint];
+  }
+
+void setProcessStep(int s) {
+  processStep = s;
+  Serial.print("Set process Step: ");
+  Serial.println(processStep);
+  }
+
+void showProcessingStep() {
+  Serial.print("Step: ");
+  Serial.print(processStep);
+  Serial.print(" State: ");
+  Serial.println(state);
+  Serial.print(" queue: ");
+  Serial.println(numToPrint);
+  }
