@@ -136,10 +136,18 @@ int numToPrint = 0;
 
 // Check orders
 void checkOrders() {
+  char b[100]="";
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
     Serial.println("connected for orders");
     // Make a HTTP request:
+
+    //sprintf(b, "GET /arduino1.php?sc=%s HTTP/1.1", customerID);
+    //client.println(b);
+    //Serial.println(b);
+    //sprintf(b, "Host: %s", server);
+    //client.println(b);
+    //Serial.println(b);
     client.print("GET /arduino1.php?sc="); client.print(customerID); client.println(" HTTP/1.1");
     client.print("Host: "); client.println(server);
     client.println("Connection: close");
@@ -159,23 +167,32 @@ void checkOrders() {
 // and call http://87.51.52.114/arduino4.php?sc=1234&o=69&s=processing
 
 void printOrder() {
+  char b[100]="";
   if (numToPrint<1) return;
   order = getOrderToPrint();
 
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
-    Serial.println("connected for print");
+    Serial.println("*** Print order.");
     // Make a HTTP request:
-    client.print("GET /arduino3.php?sc=1234&o=");
+    // sprintf(b,"GET /arduino3.php?sc=1234&o=%s HTTP/1.1", order);
+    // Serial.println(b);
+    // client.println(b);
+    client.print("GET /arduino3.php?sc=");
+    client.print(customerID);
+    client.print("&o=");
     client.print(order);
     client.println(" HTTP/1.1");
-    client.println("Host: 87.51.52.114");
+    // sprintf(b,"Host: %s", server);
+    // client.println(b);
+    // Serial.println(b);
+    client.print("Host: ");
+    client.println(server);
     client.println("Connection: close");
     client.println();
     setProcessStep(processPrintData);
     //printer.wake();
     Serial.println("*** START PRINTING ***");
-
     }
   else {
     // if you didn't get a connection to the server:
@@ -191,6 +208,7 @@ void printOrder() {
 // relies on global order to be the number of the order being processed
 
 void reportProcessingOrder() {
+  char b[100] = "";
 
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
@@ -200,10 +218,18 @@ void reportProcessingOrder() {
 
     Serial.println("connected for print");
     // Make a HTTP request:
+
+    // sprintf(b,"GET /arduino4.php?sc=1234&o=%d&s=processing HTTP/1.1", order);
+    // client.println(b);
+    // Serial.println(b);
     client.print("GET /arduino4.php?sc=1234&o=");
     client.print(order);
     client.println("&s=processing HTTP/1.1");
-    client.println("Host: 87.51.52.114");
+    client.print("Host: ");
+    client.println(server);
+    // sprintf(b,"Host: %s", server);
+    // client.println(b);
+    // Serial.println(b);
     client.println("Connection: close");
     client.println();
 
