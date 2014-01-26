@@ -1,6 +1,6 @@
 /*******************************************
  *
- * Name.......:  Epson TM-T88II Library
+ * Name...... :  Epson TM-T88II Library
  * Description:  A Library to control an Epson TM-T88II thermal printer (microprinter) 
  *               by an arduino via serial connection
  * Author.....:  Stefan Huber
