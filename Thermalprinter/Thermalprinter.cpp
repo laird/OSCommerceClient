@@ -1,5 +1,5 @@
 /*******************************************
- * see header-file for further informations
+ *  see header-file for further informations
  ********************************************/
 
 #include "Arduino.h"
