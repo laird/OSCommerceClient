@@ -29,6 +29,8 @@ LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
 
 // printer stuff
 
+const int haveprinter = 0; // set to 1 if there is a printer
+
 const int printer_RX_Pin = 2;
 const int printer_TX_Pin = 3;
 
@@ -91,7 +93,7 @@ void setup() {
 
   // set up printer (save power, set configs, etc.)
 
-  printer.sleep();
+  if (haveprinter) printer.sleep();
 
   sendCheckOrders();
 }
@@ -166,6 +168,8 @@ void sendCheckOrders() {
     client.println("Connection: close");
     client.println();
 
+    delay(100);
+
     setProcessStep(processOrderList);
   }
   else {
@@ -220,10 +224,11 @@ void sendPrintOrder() {
     client.println(server);
     client.println("Connection: close");
     client.println();
-    
+
+    delay(100);
+
     setProcessStep(processPrintData);
-    //printer.wake();
-    Serial.println("*** START PRINTING ***");
+    if (haveprinter) printer.wake();
     loop();
   }
   else {
@@ -241,7 +246,7 @@ void sendPrintOrder() {
 //
 // relies on global order to be the number of the order being processed
 
-void reportProcessingOrder() {
+void sendProcessingOrder() {
   char b[100] = "";
 
   startEthernet();
@@ -253,7 +258,7 @@ void reportProcessingOrder() {
 
     Serial.println("connected for print");
     // Make a HTTP request:
-    
+
     Serial.print("GET /arduino4.php?sc=1234&o=");
     Serial.print(order);
     Serial.println("&s=processing HTTP/1.1");
@@ -280,6 +285,8 @@ void reportProcessingOrder() {
     client.println("Connection: close");
     client.println();
 
+    delay(100);
+
     setProcessStep(processReportData); // so we process the return data properly
     loop();
   }
@@ -293,9 +300,8 @@ void reportProcessingOrder() {
 
 // Loop processing incoming data
 
-void loop()
-{
-  showProcessingStep(); // for debugging fun  
+void loop() {
+  showProcessStep(); // for debugging fun  
   switch(processStep) {
   case requestOrders: 
     sendCheckOrders();
@@ -310,7 +316,7 @@ void loop()
     processIncoming();
     break;
   case reportProcessing:
-    reportProcessingOrder();
+    sendProcessingOrder();
     break;
   case processReportData:
     processIncoming();
@@ -318,103 +324,114 @@ void loop()
   }
 }
 
+// process returned data
+
 void processIncoming() {
-  
+  Serial.println("process incoming");
+  showProcessStep();
+
   // if there are incoming bytes available
   // from the server, read them and print them:
   // And parse/process them as appropriate for processStep.
-  
-  if (client.available()) {
-    char c = client.read();
-    Serial.print(c);
 
-    // if processing print data, just send it to the printer
-    if (processStep==processPrintData) {
-      if (state == 0) { // skipping header
-        if (c == matchString[matched]) {
-          ++matched;
-        }
-        else {
-          matched = 0;
-        }
-        if (matched>=matchLen) setParseState(inArgs);
-      }
+  while (client.connected()) {
+      char c = client.read();
+      Serial.print(c);
 
-      if (state == inArgs) {
-        //printer.print(c);
-        Serial.print(c);
-      }
-    }
-
-    // if processing order list, parse out orders and queue them to print
-    if (processStep==processOrderList) {
-
-      if (state == 0) { // skipping header
-        if (c == matchString[matched]) {
-          ++matched;
-        }
-        else {
-          //          if (matched>0) Serial.println("No match."); // end matching
-          matched = 0;
-        }
-        if (matched>=matchLen) setParseState(inArgs);
-      }
-
-      if (state == inArgs) {
-        if (c == '<') { // end of line (order number and status)
-          if (a[1]==1) addToPrint(a[0]); // if pending, add to queue to print
-          numArgs = -1;
-          a[0]=0;
-          a[1]=0;
-        }
-        if (c>='0' && c<='9') { // digits
-          if (!inNum) { // first digit in number
-            numArgs += 1;
-            inNum = 1;
+      // if processing print data, just send it to the printer
+      if (processStep==processPrintData) {
+        if (state == 0) { // skipping header
+          if (c == matchString[matched]) {
+            ++matched;
           }
-          a[numArgs] = a[numArgs]*10+c-'0'; // add digit to int
-        }
-        else { // not a digit
-          if (inNum) {
-            inNum = 0;
+          else {
+            matched = 0;
+          }
+          if (matched>=matchLen) {
+            setParseState(inArgs);
+            Serial.println("*** START PRINTING ***"); // start printing after header
           }
         }
+
+        if (state == inArgs) {
+          if (haveprinter) printer.print(c);
+          //Serial.print(c);
+        }
       }
 
-      if (state == 2) {
-        Serial.print(c);
+      // if processing order list, parse out orders and queue them to print
+      if (processStep==processOrderList) {
+
+        if (state == 0) { // skipping header
+          if (c == matchString[matched]) {
+            ++matched;
+          }
+          else {
+            //          if (matched>0) Serial.println("No match."); // end matching
+            matched = 0;
+          }
+          if (matched>=matchLen) setParseState(inArgs);
+        }
+
+        if (state == inArgs) {
+          if (c == '<') { // end of line (order number and status)
+            if (a[1]==1) addToPrint(a[0]); // if pending, add to queue to print
+            numArgs = -1;
+            a[0]=0;
+            a[1]=0;
+          }
+          if (c>='0' && c<='9') { // digits
+            if (!inNum) { // first digit in number
+              numArgs += 1;
+              inNum = 1;
+            }
+            a[numArgs] = a[numArgs]*10+c-'0'; // add digit to int
+          }
+          else { // not a digit
+            if (inNum) {
+              inNum = 0;
+            }
+          }
+        }
+
+        if (state == 2) {
+          Serial.print(c);
+        }
       }
     }
-  else Serial.println("client not available");
-  }
+  //}
 
-  // if the server's disconnected, stop the client:
-  if (!client.connected()) {
+  // when the server's disconnected, stop the client:
     setParseState(0);
 
     Serial.println();
     Serial.println("disconnecting.");
     client.stop();
 
-    showProcessingStep();
+    showProcessStep();
 
     // If there are any queued to print, print one
     if (processStep==processOrderList) {
+      Serial.println("*** done processing order list");
       if (numToPrint>0) sendPrintOrder();
-    }
+      }
 
     // If we were printing, stop printing and put printer to sleep
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
-      //printer.sleep();
+      if(haveprinter) printer.sleep();
       setProcessStep(reportProcessing);
-      //reportProcessingOrder();  // and report that the order is being processed
+      sendProcessingOrder();  // and report that the order is being processed
     }
 
     // When done reporting an order processed, move on to print the next order
     if (processStep == processReportData) {
+      Serial.println("*** done processing return from reporting progress");
       order = 0;
-      if (numToPrint>0) setProcessStep(requestPrint); // if any more to print, do one
+      if (numToPrint>0) {
+        setProcessStep(requestPrint); // if any more to print, do one
+        sendPrintOrder();
+      }
     }
 
     // if there's nothing else to do, wait 30 seconds, then check for orders
@@ -423,7 +440,7 @@ void processIncoming() {
     setProcessStep(requestOrders);
     sendCheckOrders();
   }
-}
+
 
 // add an order to the print queue. If maxed out, ignore it.
 
@@ -451,23 +468,26 @@ int getOrderToPrint() {
 
 void setParseState(int s) {
   state = s;
-  Serial.print("   Set parse state: "); showProcessingStep();
+  Serial.print("   Set parse state: "); 
+  showProcessStep();
 }
 
 void setProcessStep(int s) {
-  processStep = s; state = 0;
-  Serial.print("   Set process Step: "); showProcessingStep();
+  processStep = s; 
+  state = 0;
+  Serial.print("   Set process Step: "); 
+  showProcessStep();
 }
 
 int oldProcessStep = 0;
 int oldState = 0;
 
-void showProcessingStep() {
+void showProcessStep() {
   if (oldProcessStep==processStep && oldState==state) return; // nothing interesting to print
-  
+
   oldProcessStep = processStep;
   oldState = state;
-  
+
   Serial.print("   Step: ");
   switch(processStep) {
   case requestOrders: 
@@ -495,6 +515,7 @@ void showProcessingStep() {
   Serial.print(" queue: ");
   Serial.println(numToPrint);
 }
+
 
 
 
