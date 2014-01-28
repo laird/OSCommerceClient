@@ -16,7 +16,7 @@
 #include <LiquidCrystal.h>
 #include <Thermal.h>
 
-String customerID = "1234"; // unique for each customer
+String securityCode = "1234"; // unique for each customer
 
 // wait times, in ms
 
@@ -145,7 +145,7 @@ void sendCheckOrders() {
     Serial.println("connected for orders");
     // Make a HTTP request:
 
-    //sprintf(b, "GET /arduino1.php?sc=%s HTTP/1.1", customerID);
+    //sprintf(b, "GET /arduino1.php?sc=%s HTTP/1.1", securityCode);
     //client.println(b);
     //Serial.println(b);
     //sprintf(b, "Host: %s", server);
@@ -153,7 +153,7 @@ void sendCheckOrders() {
     //Serial.println(b);
 
     Serial.print("GET /arduino1.php?sc="); 
-    Serial.print(customerID); 
+    Serial.print(securityCode); 
     Serial.println(" HTTP/1.1");
     Serial.print("Host: "); 
     Serial.println(server);
@@ -161,7 +161,7 @@ void sendCheckOrders() {
     Serial.println();
 
     client.print("GET /arduino1.php?sc="); 
-    client.print(customerID); 
+    client.print(securityCode); 
     client.println(" HTTP/1.1");
     client.print("Host: "); 
     client.println(server);
@@ -199,7 +199,7 @@ void sendPrintOrder() {
     // client.println(b);
 
     Serial.print("GET /arduino3.php?sc=");
-    Serial.print(customerID);
+    Serial.print(securityCode);
     Serial.print("&o=");
     Serial.print(order);
     Serial.println(" HTTP/1.1");
@@ -213,7 +213,7 @@ void sendPrintOrder() {
 
 
     client.print("GET /arduino3.php?sc=");
-    client.print(customerID);
+    client.print(securityCode);
     client.print("&o=");
     client.print(order);
     client.println(" HTTP/1.1");
