@@ -1,12 +1,12 @@
 /*
   OSCommerce client
-
+ 
  This sketch connects to a website using an Arduino Wiznet Ethernet shield,
  and uses a series of simple web services.
-
+ 
  Based on sample Arduino HTTP sketch created 18 Dec 2009 by David A. Mellis
  modified 9 Apr 2012 by Tom Igoe, based on work by Adrian McEwen
-
+ 
  Added OSCommerce logic Jan 2014, Laird Popkin
  */
 
@@ -62,14 +62,14 @@ EthernetClient client;
  The logic is:
  1) request the list of orders
  2) process the list until connection ends. If any are pending, add to a queue to print.
-    If no orders are pending, wait 1 minute, then go back to (1). If more than 10 orders are
-    pending, ignore the rest.
+ If no orders are pending, wait 1 minute, then go back to (1). If more than 10 orders are
+ pending, ignore the rest.
  3) if there are items to print, take top print request from queue and request it. Otherwise go to (0)
  4) process the return data (send to printer and display), until connection ends. Send the ‘processing’ message, and go to (3).
-
- All return data is processed in loop()
-
-*/
+ 
+ All of the above are 'processState' values, handled in loop().
+ 
+ */
 
 // states for overall process
 
@@ -80,21 +80,23 @@ const int processPrintData = 4; // process the return data (and display and prin
 const int reportProcessing = 5; // report that an order is processing
 const int processReportData = 6;  // ignore returned data
 
-int processStep;
+int processStep = 1;
 
 int order = 0; // number of order being processed
 
 void setup() {
- // set up LCD
+  // set up LCD
 
- lcd.begin(20,4);
+  lcd.begin(20,4);
 
- // set up printer (save power, set configs, etc.)
+  // set up printer (save power, set configs, etc.)
 
   printer.sleep();
 
- // set up ethernet
+  sendCheckOrders();
+}
 
+void startEthernet() {
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
   while (!Serial) {
@@ -111,8 +113,6 @@ void setup() {
   // give the Ethernet shield a second to initialize:
   delay(waitEthernetOn);
   Serial.println("connecting...");
-
-  checkOrders();
 }
 
 int a[3];
@@ -135,8 +135,9 @@ int toPrint[maxNumToPrint];
 int numToPrint = 0;
 
 // Check orders
-void checkOrders() {
+void sendCheckOrders() {
   char b[100]="";
+  startEthernet();
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
     Serial.println("connected for orders");
@@ -148,17 +149,30 @@ void checkOrders() {
     //sprintf(b, "Host: %s", server);
     //client.println(b);
     //Serial.println(b);
-    client.print("GET /arduino1.php?sc="); client.print(customerID); client.println(" HTTP/1.1");
-    client.print("Host: "); client.println(server);
+
+    Serial.print("GET /arduino1.php?sc="); 
+    Serial.print(customerID); 
+    Serial.println(" HTTP/1.1");
+    Serial.print("Host: "); 
+    Serial.println(server);
+    Serial.println("Connection: close");
+    Serial.println();
+
+    client.print("GET /arduino1.php?sc="); 
+    client.print(customerID); 
+    client.println(" HTTP/1.1");
+    client.print("Host: "); 
+    client.println(server);
     client.println("Connection: close");
     client.println();
+
     setProcessStep(processOrderList);
-    }
+  }
   else {
     // if you didn't get a connection to the server:
     Serial.println("connection failed");
-    }
   }
+}
 
 // Print order (if any are in queue)
 //
@@ -166,11 +180,12 @@ void checkOrders() {
 // send the result to the printer/display
 // and call http://87.51.52.114/arduino4.php?sc=1234&o=69&s=processing
 
-void printOrder() {
+void sendPrintOrder() {
   char b[100]="";
   if (numToPrint<1) return;
   order = getOrderToPrint();
 
+  startEthernet();
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
     Serial.println("*** Print order.");
@@ -178,6 +193,21 @@ void printOrder() {
     // sprintf(b,"GET /arduino3.php?sc=1234&o=%s HTTP/1.1", order);
     // Serial.println(b);
     // client.println(b);
+
+    Serial.print("GET /arduino3.php?sc=");
+    Serial.print(customerID);
+    Serial.print("&o=");
+    Serial.print(order);
+    Serial.println(" HTTP/1.1");
+    // sprintf(b,"Host: %s", server);
+    // Serial.println(b);
+    // Serial.println(b);
+    Serial.print("Host: ");
+    Serial.println(server);
+    Serial.println("Connection: close");
+    Serial.println();
+
+
     client.print("GET /arduino3.php?sc=");
     client.print(customerID);
     client.print("&o=");
@@ -190,15 +220,19 @@ void printOrder() {
     client.println(server);
     client.println("Connection: close");
     client.println();
+    
     setProcessStep(processPrintData);
     //printer.wake();
     Serial.println("*** START PRINTING ***");
-    }
+    loop();
+  }
   else {
     // if you didn't get a connection to the server:
     Serial.println("connection failed");
-    }
+    setProcessStep(requestOrders);
+    loop();
   }
+}
 
 
 // Report processing of an order
@@ -210,6 +244,7 @@ void printOrder() {
 void reportProcessingOrder() {
   char b[100] = "";
 
+  startEthernet();
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
     Serial.print("Reporting order ");
@@ -218,6 +253,18 @@ void reportProcessingOrder() {
 
     Serial.println("connected for print");
     // Make a HTTP request:
+    
+    Serial.print("GET /arduino4.php?sc=1234&o=");
+    Serial.print(order);
+    Serial.println("&s=processing HTTP/1.1");
+    Serial.print("Host: ");
+    Serial.println(server);
+    // sprintf(b,"Host: %s", server);
+    // Serial.println(b);
+    // Serial.println(b);
+    Serial.println("Connection: close");
+    Serial.println();
+
 
     // sprintf(b,"GET /arduino4.php?sc=1234&o=%d&s=processing HTTP/1.1", order);
     // client.println(b);
@@ -234,20 +281,49 @@ void reportProcessingOrder() {
     client.println();
 
     setProcessStep(processReportData); // so we process the return data properly
-    }
+    loop();
+  }
   else {
     // if you didn't get a connection to the server:
     Serial.println("connection failed");
-    }
+    setProcessStep(requestOrders);
+    loop();
   }
+}
 
 // Loop processing incoming data
 
 void loop()
 {
-  //showProcessingStep(); // for debugging fun
+  showProcessingStep(); // for debugging fun  
+  switch(processStep) {
+  case requestOrders: 
+    sendCheckOrders();
+    break;
+  case processOrderList:
+    processIncoming();
+    break;
+  case requestPrint:
+    sendPrintOrder();
+    break;
+  case processPrintData:
+    processIncoming();
+    break;
+  case reportProcessing:
+    reportProcessingOrder();
+    break;
+  case processReportData:
+    processIncoming();
+    break;
+  }
+}
+
+void processIncoming() {
+  
   // if there are incoming bytes available
   // from the server, read them and print them:
+  // And parse/process them as appropriate for processStep.
+  
   if (client.available()) {
     char c = client.read();
     Serial.print(c);
@@ -257,18 +333,18 @@ void loop()
       if (state == 0) { // skipping header
         if (c == matchString[matched]) {
           ++matched;
-          }
+        }
         else {
           matched = 0;
-          }
+        }
         if (matched>=matchLen) setParseState(inArgs);
       }
 
       if (state == inArgs) {
         //printer.print(c);
         Serial.print(c);
-        }
       }
+    }
 
     // if processing order list, parse out orders and queue them to print
     if (processStep==processOrderList) {
@@ -276,53 +352,40 @@ void loop()
       if (state == 0) { // skipping header
         if (c == matchString[matched]) {
           ++matched;
-//          Serial.print("Matched ");
-//          Serial.print(matched);
-//          Serial.println(" char. ");
-          }
+        }
         else {
-//          if (matched>0) Serial.println("No match."); // end matching
+          //          if (matched>0) Serial.println("No match."); // end matching
           matched = 0;
-          }
+        }
         if (matched>=matchLen) setParseState(inArgs);
       }
 
       if (state == inArgs) {
         if (c == '<') { // end of line (order number and status)
-          // Serial.println();
-          // Serial.print(F("Processing order "));
-          // Serial.print(a[0]);
-          // Serial.print(" status ");
-          // Serial.println(a[1]);
-          // Serial.println();
           if (a[1]==1) addToPrint(a[0]); // if pending, add to queue to print
           numArgs = -1;
           a[0]=0;
           a[1]=0;
-          }
+        }
         if (c>='0' && c<='9') { // digits
           if (!inNum) { // first digit in number
             numArgs += 1;
             inNum = 1;
-            }
-          a[numArgs] = a[numArgs]*10+c-'0'; // add digit to int
           }
+          a[numArgs] = a[numArgs]*10+c-'0'; // add digit to int
+        }
         else { // not a digit
           if (inNum) {
             inNum = 0;
-//            Serial.print(F("arg "));
-//            Serial.print(numArgs);
-//            Serial.print(F(" is "));
-//            Serial.print(a[numArgs]);
-            }
           }
-        }
-
-      if (state == 2) {
-        Serial.print(c);
         }
       }
 
+      if (state == 2) {
+        Serial.print(c);
+      }
+    }
+  else Serial.println("client not available");
   }
 
   // if the server's disconnected, stop the client:
@@ -337,7 +400,7 @@ void loop()
 
     // If there are any queued to print, print one
     if (processStep==processOrderList) {
-      if (numToPrint>0) printOrder();
+      if (numToPrint>0) sendPrintOrder();
     }
 
     // If we were printing, stop printing and put printer to sleep
@@ -345,19 +408,20 @@ void loop()
       Serial.println("*** END PRINTING ***");
       //printer.sleep();
       setProcessStep(reportProcessing);
-      reportProcessingOrder();  // and report that the order is being processed
-      }
+      //reportProcessingOrder();  // and report that the order is being processed
+    }
 
     // When done reporting an order processed, move on to print the next order
     if (processStep == processReportData) {
       order = 0;
-      if (numToPrint>0) printOrder(); // if any more to print, do one
-      }
+      if (numToPrint>0) setProcessStep(requestPrint); // if any more to print, do one
+    }
 
     // if there's nothing else to do, wait 30 seconds, then check for orders
+    Serial.println("waitPollForOrders");
     delay(waitPollForOrders);
     setProcessStep(requestOrders);
-    checkOrders();
+    sendCheckOrders();
   }
 }
 
@@ -366,14 +430,14 @@ void loop()
 void addToPrint(int order) {
   if (numToPrint>= maxNumToPrint) {
     //Serial.println("*** ignoring ***");
-    }
+  }
   else {
     Serial.print("*** Recorded order ");
     Serial.println(order);
     toPrint[numToPrint]=order;
     ++numToPrint;
-    }
   }
+}
 
 // return an order to print, or -1 if there are no more orders to print
 
@@ -381,27 +445,56 @@ int getOrderToPrint() {
   if (numToPrint <1) {
     Serial.println("*** Something from nothing ***");
     return -1;
-    }
-  return toPrint[--numToPrint];
   }
+  return toPrint[--numToPrint];
+}
 
 void setParseState(int s) {
   state = s;
-  Serial.print("   Set parse state: ");
-  Serial.println(state);
-  }
+  Serial.print("   Set parse state: "); showProcessingStep();
+}
 
 void setProcessStep(int s) {
-  processStep = s;
-  Serial.print("   Set process Step: ");
-  Serial.println(processStep);
-  }
+  processStep = s; state = 0;
+  Serial.print("   Set process Step: "); showProcessingStep();
+}
+
+int oldProcessStep = 0;
+int oldState = 0;
 
 void showProcessingStep() {
+  if (oldProcessStep==processStep && oldState==state) return; // nothing interesting to print
+  
+  oldProcessStep = processStep;
+  oldState = state;
+  
   Serial.print("   Step: ");
-  Serial.print(processStep);
+  switch(processStep) {
+  case requestOrders: 
+    Serial.print("requestOrders");
+    break;
+  case processOrderList: 
+    Serial.print("processOrderList");
+    break;
+  case requestPrint: 
+    Serial.print("requestPrint");
+    break;
+  case processPrintData: 
+    Serial.print("processPrintData");
+    break;
+  case reportProcessing: 
+    Serial.print("reportProcessing");
+    break;
+  case processReportData: 
+    Serial.print("processReportData");
+    break;
+  }
+  //Serial.print(processStep);
   Serial.print(" State: ");
   Serial.print(state);
   Serial.print(" queue: ");
   Serial.println(numToPrint);
-  }
+}
+
+
+
