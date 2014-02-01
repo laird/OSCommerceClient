@@ -14,14 +14,14 @@
 
 String securityCode = "1234"; // unique for each customer
 int waitPollForOrders = 30000; // Look for orders every X ms
-#DEFINE Buzzer 1; // Set to 0 if no buzzer is connected, set to 1 if we have one connected
+#DEFINE Buzzer 0; // Set to 0 if no buzzer is connected, set to 1 if we have one connected
 #DEFINE Buzzerport 2; // What port do we have the buzzer on
 #DEFINE LCD 0; // Set to 1 if we have one connected or set to 0 if we dont use LCD
 #DEFINE Adafruit 0; // Set to 1 if the printer is an adafruit type printer, must be 0 if Epson is connected
 #DEFINE Epson 1; // Set to 0 if its an adafruit type printer
 const int printer_RX_Pin = 6; // port that the RX line is connected to
 const int printer_TX_Pin = 7; // port that the TX line is connected to
-const int haveprinter = 0; // set to 1 if there is a printer
+
 
 //***Config Section END***
 
@@ -117,7 +117,7 @@ lcd.begin(20,4);
 // set up printer (save power, set configs, etc.)
 
 #if Adafruit
-if (haveprinter) printer.sleep();
+printer.sleep();
 #endif
   
 
@@ -211,6 +211,8 @@ void sendCheckOrders() {
 // and call http://87.51.52.114/arduino4.php?sc=1234&o=69&s=processing
 
 void sendPrintOrder() {
+ 
+ 
   char b[100]="";
   if (numToPrint<1) return;
   order = getOrderToPrint();
@@ -254,7 +256,11 @@ void sendPrintOrder() {
     delay(100);
 
     setProcessStep(processPrintData);
-    if (haveprinter) printer.wake();
+    
+    #if Adafruit
+printer.wake();
+    #endif
+    
     loop();
   }
   else {
@@ -380,7 +386,11 @@ void processIncoming() {
         }
 
         if (state == inArgs) {
-          if (haveprinter) printer.print(c);
+          
+          #if adafruit
+printer.print(c);
+#endif
+          
           //Serial.print(c);
         }
       }
@@ -445,7 +455,10 @@ void processIncoming() {
     // If we were printing, stop printing and put printer to sleep
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
-      if(haveprinter) printer.sleep();
+      #if adafruit
+printer.sleep();
+#endif
+      
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
     }
@@ -541,7 +554,6 @@ void showProcessStep() {
   Serial.print(" queue: ");
   Serial.println(numToPrint);
 }
-
 
 
 
