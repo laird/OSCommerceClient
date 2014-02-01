@@ -46,6 +46,8 @@ int waitPollForOrders = 30000; // Look for orders every X ms
 const int printer_RX_Pin = 6; // port that the RX line is connected to
 const int printer_TX_Pin = 7; // port that the TX line is connected to
 
+const int maxNumToPrint = 10; // Print only this many orders in a batch (because we used a fixed size array queue)
+
 //*** Config Section END ***
 
 // wait times, in ms
@@ -70,12 +72,10 @@ LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
 
 #if Adafruit
 #include <Thermal.h>
-Thermal printer(printer_RX_Pin, printer_TX_Pin, 19200);
 #endif
 
 #if Epson
 #include <thermalprinter.h>
-Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin);
 #endif
 
 // --------------------ethernet stuff--------------------
@@ -123,29 +123,34 @@ int processStep = requestOrders;
 int order = 0; // number of order being processed
 
 void setup() {
-// --------------------set up LCD--------------------
-
-#if LCD
-lcd.begin(20,4);
-#endif
-
-// --------------------set up printer --------------------
-
-#if Adafruit
-printer.sleep();
-#endif
-
-
-  sendCheckOrders();
-}
-
-void startEthernet() {
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
 
+  // --------------------set up LCD--------------------
+
+  #if LCD
+  Serial.println("Set up LCD");
+  lcd.begin(20,4);
+  #endif
+
+  // --------------------set up printer --------------------
+
+  #if Adafruit
+  Serial.println("Set up printer");
+  Thermal printer(printer_RX_Pin, printer_TX_Pin, 19200);
+  printer.sleep();
+  #endif
+  #if Epson
+  Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin);
+  #endif
+
+  sendCheckOrders();
+}
+
+void startEthernet() {
   // start the Ethernet connection:
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed to configure Ethernet using DHCP");
@@ -173,7 +178,6 @@ int matched = 0;
 char matchString[] = "html";
 const int matchLen = 4;
 
-const int maxNumToPrint = 2; // Print only this many orders in a batch
 int toPrint[maxNumToPrint];
 int numToPrint = 0;
 
@@ -400,9 +404,9 @@ void processIncoming() {
 
         if (state == inArgs) {
 
-          #if adafruit
-printer.print(c);
-#endif
+          #if Adafruit
+          printer.print(c);
+          #endif
 
           //Serial.print(c);
         }
@@ -468,10 +472,12 @@ printer.print(c);
     // If we were printing, stop printing and put printer to sleep
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
-      #if adafruit
-printer.sleep();
-#endif
-
+      Serial.println();
+      #if Adafruit
+      printer.sleep();
+      Serial.println("sleep");
+      #endif
+      delay(1000); // testing
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
     }
@@ -520,14 +526,14 @@ int getOrderToPrint() {
 
 void setParseState(int s) {
   state = s;
-  Serial.print("   Set parse state: ");
+  Serial.println("   Set parse state.");
   showProcessStep();
 }
 
 void setProcessStep(int s) {
   processStep = s;
   state = 0;
-  Serial.print("   Set process Step: ");
+  Serial.println("   Set process Step: ");
   showProcessStep();
 }
 
