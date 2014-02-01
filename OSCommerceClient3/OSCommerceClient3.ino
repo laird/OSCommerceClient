@@ -10,37 +10,55 @@
  Added OSCommerce logic Jan 2014, Laird Popkin
  */
 
+//***Config Section - Only change These***
+
+String securityCode = "1234"; // unique for each customer
+int waitPollForOrders = 30000; // Look for orders every X ms
+#DEFINE Buzzer 1; //Set to 0 if no buzzer is connected, set to 1 if we have one connected
+#DEFINE Buzzerport 2; What port do we have the buzzer on
+#DEFINE LCD 0; //Set to 1 if we have one connected or set to 0 if we dont use LCD
+#DEFINE Adafruit 0; //Set to 1 if the printer is an adafruit type printer, must be 0 if Epson is connected
+#DEFINE Epson 1; // Set to 0 if its an adafruit type printer
+const int printer_RX_Pin = 6; //port that the RX line is connected to
+const int printer_TX_Pin = 7; //port that the TX line is connected to
+const int haveprinter = 0; // set to 1 if there is a printer
+
+//***Config Section END***
+
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <Ethernet.h>
-#include <LiquidCrystal.h>
-#include <Thermal.h>
-
-String securityCode = "1234"; // unique for each customer
 
 // wait times, in ms
 
-int waitPollForOrders = 30000;
 int waitEthernetOn = 1000;
 
 // Buzzer stuff
 
-const int Buzzer        =  2;   // Buzzer on digital pin 2
+#if Buzzer
+const int Buzzer        =  Buzzerport;   
 pinMode(Buzzer, OUTPUT); 
+#endif
+
 
 // LCD stuff
 
+#if LCD
+#include <LiquidCrystal.h>
 LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
+#endif
 
 // printer stuff
 
-const int haveprinter = 0; // set to 1 if there is a printer
-
-const int printer_RX_Pin = 2;
-const int printer_TX_Pin = 3;
-
+#if Adafruit
+#include <Thermal.h>
 Thermal printer(printer_RX_Pin, printer_TX_Pin, 19200);
+#endif
 
+#if Epson
+#include <thermalprinter.h>
+Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin);
+#endif
 
 // ethernet stuff
 
@@ -61,7 +79,6 @@ IPAddress ip(192,168,1,229);
 // that you want to connect to (port 80 is default for HTTP):
 EthernetClient client;
 
-// LCD display
 
 
 // business logic
@@ -95,11 +112,18 @@ int order = 0; // number of order being processed
 void setup() {
   // set up LCD
 
-  lcd.begin(20,4);
+#if LCD
+lcd.begin(20,4);
+#endif
+
+  
 
   // set up printer (save power, set configs, etc.)
 
-  if (haveprinter) printer.sleep();
+#if Adafruit
+if (haveprinter) printer.sleep();
+#endif
+  
 
   sendCheckOrders();
 }
