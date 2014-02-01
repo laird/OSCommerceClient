@@ -23,6 +23,11 @@ String securityCode = "1234"; // unique for each customer
 int waitPollForOrders = 30000;
 int waitEthernetOn = 1000;
 
+// Buzzer stuff
+
+const int Buzzer        =  2;   // Buzzer on digital pin 2
+pinMode(Buzzer, OUTPUT); 
+
 // LCD stuff
 
 LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
@@ -35,6 +40,7 @@ const int printer_RX_Pin = 2;
 const int printer_TX_Pin = 3;
 
 Thermal printer(printer_RX_Pin, printer_TX_Pin, 19200);
+
 
 // ethernet stuff
 
