@@ -40,7 +40,6 @@ const int Buzzer        =  Buzzerport;
 pinMode(Buzzer, OUTPUT); 
 #endif
 
-
 // LCD stuff
 
 #if LCD
@@ -80,7 +79,6 @@ IPAddress ip(192,168,1,229);
 EthernetClient client;
 
 
-
 // business logic
 
 /*
@@ -116,9 +114,7 @@ void setup() {
 lcd.begin(20,4);
 #endif
 
-  
-
-  // set up printer (save power, set configs, etc.)
+// set up printer (save power, set configs, etc.)
 
 #if Adafruit
 if (haveprinter) printer.sleep();
