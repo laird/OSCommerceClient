@@ -14,13 +14,13 @@
 
 String securityCode = "1234"; // unique for each customer
 int waitPollForOrders = 30000; // Look for orders every X ms
-#DEFINE Buzzer 1; //Set to 0 if no buzzer is connected, set to 1 if we have one connected
-#DEFINE Buzzerport 2; What port do we have the buzzer on
-#DEFINE LCD 0; //Set to 1 if we have one connected or set to 0 if we dont use LCD
-#DEFINE Adafruit 0; //Set to 1 if the printer is an adafruit type printer, must be 0 if Epson is connected
+#DEFINE Buzzer 1; // Set to 0 if no buzzer is connected, set to 1 if we have one connected
+#DEFINE Buzzerport 2; // What port do we have the buzzer on
+#DEFINE LCD 0; // Set to 1 if we have one connected or set to 0 if we dont use LCD
+#DEFINE Adafruit 0; // Set to 1 if the printer is an adafruit type printer, must be 0 if Epson is connected
 #DEFINE Epson 1; // Set to 0 if its an adafruit type printer
-const int printer_RX_Pin = 6; //port that the RX line is connected to
-const int printer_TX_Pin = 7; //port that the TX line is connected to
+const int printer_RX_Pin = 6; // port that the RX line is connected to
+const int printer_TX_Pin = 7; // port that the TX line is connected to
 const int haveprinter = 0; // set to 1 if there is a printer
 
 //***Config Section END***
