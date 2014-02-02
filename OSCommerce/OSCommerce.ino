@@ -7,7 +7,7 @@
  Based on sample Arduino HTTP sketch created 18 Dec 2009 by David A. Mellis
  modified 9 Apr 2012 by Tom Igoe, based on work by Adrian McEwen
 
- Added OSCommerce logic Jan 2014, Laird Popkin
+ Added OSCommerce logic Jan 2014, Laird Popkin and Bo
  */
 
 #include <SoftwareSerial.h>
@@ -19,9 +19,12 @@
 //#include <EthernetServer.h>
 //#include <EthernetUdp.h>
 #include <util.h>
+#include <LiquidCrystal.h>
+#include <Thermal.h> // for Adafruit
+#include <thermalprinter.h> // for Epson
 
 
-//*** Config Section - Only change These ***
+// ----- Config Section - Only change These -----
 
 // Server (unique for each storefront)
 // if you don't want to use DNS (and reduce your sketch size)
@@ -34,21 +37,27 @@ String securityCode = "1234"; // unique for each customer. Not really secure, bu
 int waitPollForOrders = 30000; // Look for orders every X ms
 
 // Buzzer
-#define Buzzer 0 // Set to 0 if no buzzer is connected, set to 1 if we have one connected
-#define Buzzerport 2 // What port do we have the buzzer on
+#define Buzzer 0
+// Set to 0 if no buzzer is connected, set to 1 if we have one connected
+#define Buzzerport 2
+// What port do we have the buzzer on
 
 // LCD display
-#define LCD 0 // Set to 1 if we have one connected or set to 0 if we dont use LCD
+#define LCD 0
+// Define if we have one connected or set to 0 if we dont use LCD
 
 // Printer (Adafruit or Epson)
-#define Adafruit 0 // Set to 1 if the printer is an adafruit type printer, must be 0 if Epson is connected
-#define Epson 0 // Set to 0 if its an adafruit type printer
-const int printer_RX_Pin = 6; // port that the RX line is connected to
-const int printer_TX_Pin = 7; // port that the TX line is connected to
+#define Adafruit 0
+// Define 1 if there's an adafruit type printer
+#define Epson 0
+// Define 1 if there's an Epson TM-T88III Receipt printer
 
-const int maxNumToPrint = 10; // Print only this many orders in a batch (because we used a fixed size array queue)
+int printer_RX_Pin = 6; // port that the RX line is connected to
+int printer_TX_Pin = 7; // port that the TX line is connected to
 
-//*** Config Section END ***
+const int maxNumToPrint = 2; // Print only this many orders in a batch (because we used a fixed size array queue)
+
+// ----- Config Section END -----
 
 // wait times, in ms
 
@@ -57,25 +66,14 @@ int waitEthernetOn = 1000; // give ethernet board 1s to initialize
 // Buzzer stuff
 
 #if Buzzer
-//const int Buzzer        =  Buzzerport;
+const int Buzzer        =  Buzzerport;
 pinMode(Buzzer, OUTPUT);
 #endif
 
 // LCD stuff
 
 #if LCD
-#include <LiquidCrystal.h>
 LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
-#endif
-
-// printer stuff
-
-#if Adafruit
-#include <Thermal.h>
-#endif
-
-#if Epson
-#include <thermalprinter.h>
 #endif
 
 // --------------------ethernet stuff--------------------
@@ -93,6 +91,35 @@ IPAddress ip(192,168,1,229);
 // that you want to connect to (port 80 is default for HTTP):
 EthernetClient client;
 
+// printer stuff,
+
+
+#if Adafruit
+Thermal printer = Thermal(printer_RX_Pin, printer_TX_Pin, 19200)
+#endif
+
+#if Epson
+Epson printer = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
+#endif
+
+// ---- other logic -----
+
+// states for parsing the return lists
+#define inHeader 0
+// skip header
+#define inArgs 1
+// parse out lists of ints
+#define inStatus 2
+// after list, check OK
+
+int state = inHeader;
+
+int matched = 0;
+char matchString[] = "html"; // match this string to detect end of headers.
+const int matchLen = 4;
+
+int toPrint[maxNumToPrint];
+int numToPrint = 0;
 
 // business logic
 
@@ -127,28 +154,48 @@ void setup() {
   Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
-  }
+    }
 
   // --------------------set up LCD--------------------
 
-  #if LCD
-  Serial.println("Set up LCD");
+#if LCD
+  Serial.println(F("Set up LCD"));
   lcd.begin(20,4);
-  #endif
+#endif
 
   // --------------------set up printer --------------------
 
-  #if Adafruit
-  Serial.println("Set up printer");
-  Thermal printer(printer_RX_Pin, printer_TX_Pin, 19200);
+#if Adafruit
+  Serial.println("Set up Adafruit printer");
   printer.sleep();
-  #endif
-  #if Epson
-  Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin);
-  #endif
+#endif
+#if Epson
+  Serial.println(F("Set up Epson printer"));
+  printer.start();
+#endif
 
   sendCheckOrders();
-}
+  }
+
+// Loop processing incoming data
+
+void loop() {
+  showProcessStep(); // for debugging fun
+  switch(processStep) {
+    case requestOrders: sendCheckOrders();
+      break;
+    case processOrderList: processIncoming();
+      break;
+    case requestPrint: sendPrintOrder();
+      break;
+    case processPrintData: processIncoming();
+      break;
+    case reportProcessing: sendProcessingOrder();
+      break;
+    case processReportData: processIncoming();
+      break;
+    }
+  }
 
 void startEthernet() {
   // start the Ethernet connection:
@@ -160,26 +207,8 @@ void startEthernet() {
   }
   // give the Ethernet shield a second to initialize:
   delay(waitEthernetOn);
-  Serial.println("connecting...");
-}
-
-int a[3];
-int numArgs = -1;
-int inNum = 0;
-
-// states for parsing the return lists
-const int inHeader = 0; // skip header
-const int inArgs = 1;  // parse out lists of ints
-const int inStatus = 2; // after list, check OK
-
-int state = inHeader;
-
-int matched = 0;
-char matchString[] = "html";
-const int matchLen = 4;
-
-int toPrint[maxNumToPrint];
-int numToPrint = 0;
+  Serial.println("Connecting...");
+  }
 
 // Check orders
 void sendCheckOrders() {
@@ -247,6 +276,14 @@ void sendPrintOrder() {
     Serial.print(securityCode);
     Serial.print("&o=");
     Serial.print(order);
+    // append printer type, so server can format for the printer
+#if Adafruit
+    Serial.print("&p=Adafruit");
+#endif
+#if Epson
+    Serial.print("&p=Epson");
+#endif
+
     Serial.println(" HTTP/1.1");
     // sprintf(b,"Host: %s", server);
     // Serial.println(b);
@@ -347,112 +384,28 @@ void sendProcessingOrder() {
   }
 }
 
-// Loop processing incoming data
-
-void loop() {
-  showProcessStep(); // for debugging fun
-  switch(processStep) {
-  case requestOrders:
-    sendCheckOrders();
-    break;
-  case processOrderList:
-    processIncoming();
-    break;
-  case requestPrint:
-    sendPrintOrder();
-    break;
-  case processPrintData:
-    processIncoming();
-    break;
-  case reportProcessing:
-    sendProcessingOrder();
-    break;
-  case processReportData:
-    processIncoming();
-    break;
-  }
-}
-
 // process returned data
 
 void processIncoming() {
+  char c2;
   Serial.println("process incoming");
   showProcessStep();
 
   // if there are incoming bytes available
   // from the server, read them and print them:
   // And parse/process them as appropriate for processStep.
+  // Until the connection ends.
 
   while (client.connected()) {
       char c = client.read();
       Serial.print(c);
 
       // if processing print data, just send it to the printer
-      if (processStep==processPrintData) {
-        if (state == 0) { // skipping header
-          if (c == matchString[matched]) {
-            ++matched;
-          }
-          else {
-            matched = 0;
-          }
-          if (matched>=matchLen) {
-            setParseState(inArgs);
-            Serial.println("*** START PRINTING ***"); // start printing after header
-          }
-        }
-
-        if (state == inArgs) {
-
-          #if Adafruit
-          printer.print(c);
-          #endif
-
-          //Serial.print(c);
-        }
-      }
+      if (processStep==processPrintData) processPrintChar(c);
 
       // if processing order list, parse out orders and queue them to print
-      if (processStep==processOrderList) {
-
-        if (state == 0) { // skipping header
-          if (c == matchString[matched]) {
-            ++matched;
-          }
-          else {
-            //          if (matched>0) Serial.println("No match."); // end matching
-            matched = 0;
-          }
-          if (matched>=matchLen) setParseState(inArgs);
-        }
-
-        if (state == inArgs) {
-          if (c == '<') { // end of line (order number and status)
-            if (a[1]==1) addToPrint(a[0]); // if pending, add to queue to print
-            numArgs = -1;
-            a[0]=0;
-            a[1]=0;
-          }
-          if (c>='0' && c<='9') { // digits
-            if (!inNum) { // first digit in number
-              numArgs += 1;
-              inNum = 1;
-            }
-            a[numArgs] = a[numArgs]*10+c-'0'; // add digit to int
-          }
-          else { // not a digit
-            if (inNum) {
-              inNum = 0;
-            }
-          }
-        }
-
-        if (state == 2) {
-          Serial.print(c);
-        }
+      if (processStep==processOrderList) processOrderListChar(c);
       }
-    }
-  //}
 
   // when the server's disconnected, stop the client:
     setParseState(0);
@@ -464,20 +417,20 @@ void processIncoming() {
     showProcessStep();
 
     // If there are any queued to print, print one
-    if (processStep==processOrderList) {
-      Serial.println("*** done processing order list");
-      if (numToPrint>0) sendPrintOrder();
-      }
+    if (numToPrint>0) {
+        setProcessStep(requestPrint);
+        sendPrintOrder();
+        }
 
     // If we were printing, stop printing and put printer to sleep
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
       Serial.println();
-      #if Adafruit
+#if Adafruit
       printer.sleep();
       Serial.println("sleep");
-      #endif
-      delay(1000); // testing
+#endif
+      //delay(1000); // testing
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
     }
@@ -499,6 +452,112 @@ void processIncoming() {
     sendCheckOrders();
   }
 
+// process incoming character when printing a receipt
+void processPrintChar(char c) {
+  char c2;
+
+    if (state == inHeader) { // skipping header
+      if (c == matchString[matched]) {
+        ++matched;
+      }
+      else {
+        matched = 0;
+      }
+      if (matched>=matchLen) {
+        setParseState(inArgs);
+        Serial.println("*** START PRINTING ***"); // start printing after header
+      }
+    }
+
+    if (state == inArgs) {
+
+      if (c=='[') { // control codes start with '[', so execute code
+        c2 = client.read();
+        switch(c2) {
+#if Epson
+          case 'B': printer.boldOn(); break;
+          case 'b': printer.boldOff(); break;
+          case 'D': printer.doubleHeightOn(); break;
+          case 'd': printer.doubleHeightOff(); break;
+          case 'R': printer.reverseOn(); break;
+          case 'r': printer.reverseOff(); break;
+          case 'U': printer.underlineOn(); break;
+          case 'u': printer.underlineOff(); break;
+          case 'F': printer.feed(); break;
+          case 'C': printer.cut(); break;
+#endif
+#if Adafruit
+          case 'B': printer.boldOn(); break;
+          case 'b': printer.boldOff(); break;
+          case 'D': printer.doubleHeightOn(); break;
+          case 'd': printer.doubleHeightOff(); break;
+          case 'R': printer.inverseOn(); break;
+          case 'r': printer.inverseOff(); break;
+          case 'U': printer.underlineOn(); break;
+          case 'u': printer.underlineOff(); break;
+          case 'F': printer.feed(1); break;
+          case 'C': printer.println();
+            printer.println('--------------------');
+            printer.println();
+            break;
+#endif
+          default: Serial.print("*** bad code "); Serial.println(c2);
+          }
+        }
+      else { // not a control code, so print it
+#if Adafruit
+        printer.print(c);
+#endif
+#if Epson
+        printer.print(c);
+#endif
+
+        }
+      }
+    }
+
+// process incoming character c when receiving an order list
+void processOrderListChar(char c) {
+  static int a[3]; // used to collect args
+  static int numArgs = -1;
+  static int inNum = 0;
+
+    if (state == 0) { // skipping header
+      if (c == matchString[matched]) {
+        ++matched;
+      }
+      else {
+        matched = 0;
+      }
+      if (matched>=matchLen) setParseState(inArgs);
+    }
+
+    if (state == inArgs) {
+      if (c == '<') { // end of line (order number and status)
+        if (a[1]==1) addToPrint(a[0]); // if pending, add to queue to print
+        numArgs = -1;
+        a[0]=0;
+        a[1]=0;
+      }
+      if (c>='0' && c<='9') { // digits
+        if (!inNum) { // first digit in number
+          numArgs += 1;
+          inNum = 1;
+        }
+        a[numArgs] = a[numArgs]*10+c-'0'; // add digit to int
+      }
+      else { // not a digit
+        if (inNum) {
+          inNum = 0;
+        }
+      }
+    }
+
+    if (state == 2) {
+      Serial.print(c);
+    }
+
+  }
 
 // add an order to the print queue. If maxed out, ignore it.
 

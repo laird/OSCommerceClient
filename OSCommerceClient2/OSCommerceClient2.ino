@@ -29,7 +29,7 @@
 
 // --------------------Buzzer--------------------
 
-const int Buzzer        =  2;   // Buzzer on digital pin 2
+int Buzzer        =  2;   // Buzzer on digital pin 2
 pinMode(Buzzer, OUTPUT); 
 
 // --------------------LCD stuff--------------------
