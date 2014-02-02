@@ -51,11 +51,15 @@ int waitPollForOrders = 30000; // Look for orders every X ms
 // Define 1 if there's an adafruit type printer
 #define Epson 0
 // Define 1 if there's an Epson TM-T88III Receipt printer
+#define DebugPrint 1
+// Define 1 to send printer output to serial debugger
 
 int printer_RX_Pin = 6; // port that the RX line is connected to
 int printer_TX_Pin = 7; // port that the TX line is connected to
 
 const int maxNumToPrint = 2; // Print only this many orders in a batch (because we used a fixed size array queue)
+
+#define debugNetIn 0
 
 // ----- Config Section END -----
 
@@ -312,7 +316,7 @@ void sendPrintOrder() {
     setProcessStep(processPrintData);
 
     #if Adafruit
-printer.wake();
+    printer.wake();
     #endif
 
     loop();
@@ -398,7 +402,10 @@ void processIncoming() {
 
   while (client.connected()) {
       char c = client.read();
-      Serial.print(c);
+
+#if debugNetIn
+      Serial.print(c);  // echo all incoming data
+#endif
 
       // if processing print data, just send it to the printer
       if (processStep==processPrintData) processPrintChar(c);
@@ -501,6 +508,18 @@ void processPrintChar(char c) {
             printer.println();
             break;
 #endif
+#if DebugPrint
+          case 'B': Serial.print("*** boldOn"); break;
+          case 'b': Serial.print("*** boldOff"); break;
+          case 'D': Serial.print("*** doubleHeightOn"); break;
+          case 'd': Serial.print("*** doubleHeightOff"); break;
+          case 'R': Serial.print("*** reverseOn"); break;
+          case 'r': Serial.print("*** reverseOff"); break;
+          case 'U': Serial.print("*** underlineOn"); break;
+          case 'u': Serial.print("*** underlineOff"); break;
+          case 'F': Serial.print("*** feed"); break;
+          case 'C': Serial.print("*** cut"); break;
+#endif
           default: Serial.print("*** bad code "); Serial.println(c2);
           }
         }
@@ -511,7 +530,9 @@ void processPrintChar(char c) {
 #if Epson
         printer.print(c);
 #endif
-
+#if DebugPrint
+        Serial.print(c);
+#endif
         }
       }
     }
