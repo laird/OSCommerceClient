@@ -437,7 +437,9 @@ void processIncoming() {
       printer.sleep();
       Serial.println("sleep");
 #endif
-      //delay(1000); // testing
+#if Epson
+      printer.cut();
+#endif
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
     }
@@ -477,6 +479,15 @@ void processPrintChar(char c) {
     }
 
     if (state == inArgs) {
+
+      /* Formatting codes are:
+        [B] bold, [b] bold off
+        [U] underline, [u] underline off
+        [R] reverse (inverse), [r] reverse off
+        [D] double height, [d] standard height
+        [F] line feed
+        [C] cut (not needed - we cut between receipts)
+      */
 
       if (c=='[') { // control codes start with '[', so execute code
         c2 = client.read();
@@ -522,6 +533,8 @@ void processPrintChar(char c) {
 #endif
           default: Serial.print("*** bad code "); Serial.println(c2);
           }
+          c2 = client.read();
+          if (c2 != ']') Serial.print("*** missing ]");
         }
       else { // not a control code, so print it
 #if Adafruit
