@@ -37,24 +37,26 @@ if (! is_numeric($_GET['o'])){
 require('includes/application_top.php'); //
 
 // CUSTOMER INFO
-$sql = sprintf("SELECT orders_id, date_purchased, delivery_name, delivery_street_address, delivery_postcode, delivery_city FROM orders
+$sql = sprintf("SELECT orders_id, date_purchased, delivery_name, delivery_street_address, delivery_postcode, delivery_city, customers_telephone FROM orders
 			   WHERE orders_id='%s'", (int)$_GET['o']); 
 $result = tep_db_query($sql);
 while($row = tep_db_fetch_array($result)){
   echo "Ordrenummer: ".$row['orders_id'];
-  echo "<br>";
-  echo "<br>";
-  echo "Bestilt: ". $row['date_purchased'];
-  echo "<br>";
-  echo "<br>";
+  echo "[F]";
+  echo "[F]";
+  echo "Bestilt: ".$row['date_purchased'];
+  echo "[F]";
+  echo "[F]";
   echo $row['delivery_name'];
-  echo "<br>";
+  echo "[F]";
   echo $row['delivery_street_address'];
-  echo "<br>";
+  echo "[F]";
   echo $row['delivery_postcode'] . " " . $row['delivery_city'];
-  echo "<br>";
+  echo "[F]";
+echo $row['customers_telephone'];
+echo "[F]";
   echo "-------------------------------------------------";
-  echo "<br>";
+  echo "[F]";
 }
   
 // ORDER DETAILS
@@ -70,36 +72,41 @@ while($row1 = tep_db_fetch_array($result1)){
     echo " - ";
     echo $row2['products_options_values'];
   }
-  echo "<br>";
+echo "[F]";
 }
 
 // ORDER STATUS
 echo "-------------------------------------------------";
-echo "<br>";
 
+echo "[F]";
 $sql = sprintf("SELECT comments FROM orders_status_history WHERE orders_id='%s' AND orders_status_id=%s LIMIT 0, 1", (int)$_GET["o"], ID_ORDER_WAITING);
 $result = tep_db_query($sql);
 while($row = tep_db_fetch_array($result)){
-  echo wordwrap($row['comments'], 37, "<br>\n");
+  echo wordwrap($row['comments'], 37, "[F]\n");
 }
-echo "<br>";
+echo "[F]";
 echo "-------------------------------------------------";
-
+echo "[F]";
 // PAYMENT INFO
 $sql = sprintf("SELECT ipaddy, ipisp FROM orders WHERE orders_id='%s'", (int)$_GET["o"]);
 $result = tep_db_query($sql);
 while($row = tep_db_fetch_array($result)){
-  echo "<br>";
+  
   echo "IP: ".$row['ipaddy'];
-  echo "<br>";
+  echo "[F]";
   echo "Udbyder: ".$row['ipisp'];
-  echo "<br>";
+  echo "[F]";
   echo "-------------------------------------------------";
-  echo "<br>";
-  echo "Betalingsmåde: ";
-  echo "<br>";
-  echo $row['payment_method'];
-  echo "<br>";
+}
+$sql = sprintf("SELECT payment_method FROM orders WHERE orders_id='%s'", (int)$_GET["o"]);
+$result = tep_db_query($sql);
+while($row = tep_db_fetch_array($result)){
+echo "[F]";
+  
+  echo "[B]"."[D]"."Betalingsmåde: ";
+  
+  echo $row['payment_method']."[b]"."[d]";
+  
 }
 echo 'OK';
 ?>
