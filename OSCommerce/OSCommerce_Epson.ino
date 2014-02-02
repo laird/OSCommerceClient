@@ -176,6 +176,7 @@ void setup() {
 //#if Epson
   Serial.println(F("Set up Epson printer"));
   TM88.start();
+   TM88.characterSet(4);
 //#endif
 
   sendCheckOrders();
