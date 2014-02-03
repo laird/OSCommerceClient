@@ -16,8 +16,6 @@
 #include <Dhcp.h>
 #include <Dns.h>
 #include <EthernetClient.h>
-//#include <EthernetServer.h>
-//#include <EthernetUdp.h>
 #include <util.h>
 #include <LiquidCrystal.h>
 #include <thermalprinter.h> 
