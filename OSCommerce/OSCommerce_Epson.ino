@@ -34,11 +34,6 @@ String securityCode = "1234"; // unique for each customer. Not really secure, bu
 int waitPollForOrders = 30000; // Look for orders every X ms
 
 
-
-// LCD display
-#define LCD 0
-// Define if we have one connected or set to 0 if we dont use LCD
-
 #define DebugPrint 1
 // Define 1 to send printer output to serial debugger
 
@@ -63,9 +58,8 @@ pinMode(Buzzer, OUTPUT);
 
 // LCD stuff
 
-#if LCD
 LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
-#endif
+
 
 // --------------------ethernet stuff--------------------
 
@@ -143,10 +137,10 @@ void setup() {
 
   // --------------------set up LCD--------------------
 
-#if LCD
+
   Serial.println(F("Set up LCD"));
   lcd.begin(20,4);
-#endif
+
 
   // --------------------set up printer --------------------
 
