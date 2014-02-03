@@ -17,7 +17,7 @@
 #include <Dns.h>
 #include <EthernetClient.h>
 #include <util.h>
-//#include <LiquidCrystal.h>
+#include <LiquidCrystal.h>
 #include <thermalprinter.h>
 
 
@@ -33,18 +33,15 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
 int waitPollForOrders = 30000; // Look for orders every X ms
 
-// Define one as 1 and the other(s) as 0.
-#define Epson 1
+// #define Epson 1
 // Define 1 to send printer output to Epson printer
-#define DebugPrint 0
+// #define DebugPrint 0
 // Define 1 to send printer output to serial debugger
 
 int printer_RX_Pin = 6; // port that the RX line is connected to
 int printer_TX_Pin = 7; // port that the TX line is connected to
 
-#define LCD 0
-
-const int maxNumToPrint = 2; // Print only this many orders in a batch (because we used a fixed size array queue)
+const int maxNumToPrint = 1; // Print only this many orders in a batch (because we used a fixed size array queue)
 
 #define debugNetIn 0
 
@@ -61,9 +58,8 @@ int waitEthernetOn = 1000; // give ethernet board 1s to initialize
 
 // LCD stuff
 
-#if LCD
 LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
-#endif
+
 
 // --------------------ethernet stuff--------------------
 
@@ -82,9 +78,9 @@ EthernetClient client;
 
 // printer stuff,
 
-#if Epson>0
+// #if Epson
 Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
-#endif
+// #endif
 
 // ---- other logic -----
 
@@ -142,19 +138,19 @@ void setup() {
 
   // --------------------set up LCD--------------------
 
-#if LCD
+
   Serial.println(F("Set up LCD"));
   lcd.begin(20,4);
-#endif
+
 
   // --------------------set up printer --------------------
 
 
   Serial.println(F("Set up printer"));
-#if Epson
+// #if Epson
   TM88.start();
   TM88.characterSet(4);
-#endif
+// #endif
   sendCheckOrders();
   }
 
@@ -402,9 +398,9 @@ void processIncoming() {
       Serial.println("*** END PRINTING ***");
       Serial.println();
 
-#if Epson
+// #if Epson
       TM88.cut();
-#endif
+// #endif
 
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
@@ -459,7 +455,7 @@ void processPrintChar(char c) {
         c2 = client.read();
         switch(c2) {
 
-#if Epson
+// #if Epson
           case 'B': TM88.boldOn(); break;
           case 'b': TM88.boldOff(); break;
           case 'D': TM88.doubleHeightOn(); break;
@@ -470,32 +466,32 @@ void processPrintChar(char c) {
           case 'u': TM88.underlineOff(); break;
           case 'F': TM88.feed(); break;
           case 'C': TM88.cut(); break;
-#endif
+// #endif
 
-#if DebugPrint
-          case 'B': Serial.print("*** boldOn"); break;
-          case 'b': Serial.print("*** boldOff"); break;
-          case 'D': Serial.print("*** doubleHeightOn"); break;
-          case 'd': Serial.print("*** doubleHeightOff"); break;
-          case 'R': Serial.print("*** reverseOn"); break;
-          case 'r': Serial.print("*** reverseOff"); break;
-          case 'U': Serial.print("*** underlineOn"); break;
-          case 'u': Serial.print("*** underlineOff"); break;
-          case 'F': Serial.print("*** feed"); break;
-          case 'C': Serial.print("*** cut"); break;
-#endif
+//#if DebugPrint
+//          case 'B': Serial.print("*** boldOn"); break;
+//          case 'b': Serial.print("*** boldOff"); break;
+//          case 'D': Serial.print("*** doubleHeightOn"); break;
+//          case 'd': Serial.print("*** doubleHeightOff"); break;
+//          case 'R': Serial.print("*** reverseOn"); break;
+//          case 'r': Serial.print("*** reverseOff"); break;
+//          case 'U': Serial.print("*** underlineOn"); break;
+//          case 'u': Serial.print("*** underlineOff"); break;
+//          case 'F': Serial.print("*** feed"); break;
+//          case 'C': Serial.print("*** cut"); break;
+// #endif
           default: Serial.print("*** bad code "); Serial.println(c2);
         }
         }
       else { // not a control code, so print it
 
-#if Epson
+//#if Epson
         TM88.print(c);
-#endif
+//#endif
 
-#if DebugPrint
-        Serial.print(c);
-#endif
+//#if DebugPrint
+//        Serial.print(c);
+//#endif
         }
       }
     }
@@ -616,4 +612,3 @@ void showProcessStep() {
   Serial.print(" queue: ");
   Serial.println(numToPrint);
 }
-
