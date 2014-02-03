@@ -18,7 +18,7 @@
 #include <EthernetClient.h>
 #include <util.h>
 #include <LiquidCrystal.h>
-#include <thermalprinter.h> 
+#include <thermalprinter.h>
 
 
 // ----- Config Section - Only change These -----
@@ -33,8 +33,9 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
 int waitPollForOrders = 30000; // Look for orders every X ms
 
-
-#define DebugPrint 1
+#define Epson 1
+// Define 1 to send printer output to Epson printer
+#define DebugPrint 0
 // Define 1 to send printer output to serial debugger
 
 int printer_RX_Pin = 6; // port that the RX line is connected to
@@ -52,9 +53,8 @@ int waitEthernetOn = 1000; // give ethernet board 1s to initialize
 
 // Buzzer stuff
 
-const int Buzzer        =  2; // Busser on digital 2 pin
-pinMode(Buzzer, OUTPUT);
-
+//const int Buzzer        =  2; // Busser on digital 2 pin
+//pinMode(Buzzer, OUTPUT);
 
 // LCD stuff
 
@@ -78,8 +78,9 @@ EthernetClient client;
 
 // printer stuff,
 
+#if Epson
 Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
-
+#endif
 
 // ---- other logic -----
 
@@ -146,9 +147,10 @@ void setup() {
 
 
   Serial.println(F("Set up printer"));
+#if Epson
   TM88.start();
   TM88.characterSet(4);
-
+#endif
   sendCheckOrders();
   }
 
@@ -281,8 +283,6 @@ void sendPrintOrder() {
 
     setProcessStep(processPrintData);
 
-   
-
     loop();
   }
   else {
@@ -398,8 +398,9 @@ void processIncoming() {
       Serial.println("*** END PRINTING ***");
       Serial.println();
 
-
+#if Epson
       TM88.cut();
+#endif
 
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
@@ -454,6 +455,7 @@ void processPrintChar(char c) {
         c2 = client.read();
         switch(c2) {
 
+#if Epson
           case 'B': TM88.boldOn(); break;
           case 'b': TM88.boldOff(); break;
           case 'D': TM88.doubleHeightOn(); break;
@@ -464,6 +466,7 @@ void processPrintChar(char c) {
           case 'u': TM88.underlineOff(); break;
           case 'F': TM88.feed(); break;
           case 'C': TM88.cut(); break;
+#endif
 
 #if DebugPrint
           case 'B': Serial.print("*** boldOn"); break;
@@ -478,11 +481,13 @@ void processPrintChar(char c) {
           case 'C': Serial.print("*** cut"); break;
 #endif
           default: Serial.print("*** bad code "); Serial.println(c2);
-        }  
+        }
         }
       else { // not a control code, so print it
 
-        printer.print(c);
+#if Epson
+        TM88.print(c);
+#endif
 
 #if DebugPrint
         Serial.print(c);

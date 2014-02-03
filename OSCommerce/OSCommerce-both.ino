@@ -16,9 +16,12 @@
 #include <Dhcp.h>
 #include <Dns.h>
 #include <EthernetClient.h>
+//#include <EthernetServer.h>
+//#include <EthernetUdp.h>
 #include <util.h>
-//#include <LiquidCrystal.h>
-#include <thermalprinter.h>
+#include <LiquidCrystal.h>
+#include <Thermal.h> // for Adafruit
+#include <thermalprinter.h> // for Epson
 
 
 // ----- Config Section - Only change These -----
@@ -33,16 +36,26 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
 int waitPollForOrders = 30000; // Look for orders every X ms
 
-// Define one as 1 and the other(s) as 0.
-#define Epson 1
-// Define 1 to send printer output to Epson printer
-#define DebugPrint 0
+// Buzzer
+#define Buzzer 0
+// Set to 0 if no buzzer is connected, set to 1 if we have one connected
+#define Buzzerport 2
+// What port do we have the buzzer on
+
+// LCD display
+#define LCD 0
+// Define if we have one connected or set to 0 if we dont use LCD
+
+// Printer (Adafruit or Epson)
+#define Adafruit 0
+// Define 1 if there's an adafruit type printer
+#define Epson 0
+// Define 1 if there's an Epson TM-T88III Receipt printer
+#define DebugPrint 1
 // Define 1 to send printer output to serial debugger
 
 int printer_RX_Pin = 6; // port that the RX line is connected to
 int printer_TX_Pin = 7; // port that the TX line is connected to
-
-#define LCD 0
 
 const int maxNumToPrint = 2; // Print only this many orders in a batch (because we used a fixed size array queue)
 
@@ -56,8 +69,10 @@ int waitEthernetOn = 1000; // give ethernet board 1s to initialize
 
 // Buzzer stuff
 
-//const int Buzzer        =  2; // Busser on digital 2 pin
-//pinMode(Buzzer, OUTPUT);
+#if Buzzer
+const int Buzzer        =  Buzzerport;
+pinMode(Buzzer, OUTPUT);
+#endif
 
 // LCD stuff
 
@@ -82,8 +97,13 @@ EthernetClient client;
 
 // printer stuff,
 
-#if Epson>0
-Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
+
+#if Adafruit
+Thermal printer = Thermal(printer_RX_Pin, printer_TX_Pin, 19200)
+#endif
+
+#if Epson
+Epson printer = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
 #endif
 
 // ---- other logic -----
@@ -149,12 +169,15 @@ void setup() {
 
   // --------------------set up printer --------------------
 
-
-  Serial.println(F("Set up printer"));
-#if Epson
-  TM88.start();
-  TM88.characterSet(4);
+#if Adafruit
+  Serial.println("Set up Adafruit printer");
+  printer.sleep();
 #endif
+#if Epson
+  Serial.println(F("Set up Epson printer"));
+  printer.start();
+#endif
+
   sendCheckOrders();
   }
 
@@ -258,7 +281,12 @@ void sendPrintOrder() {
     Serial.print("&o=");
     Serial.print(order);
     // append printer type, so server can format for the printer
-
+#if Adafruit
+    Serial.print("&p=Adafruit");
+#endif
+#if Epson
+    Serial.print("&p=Epson");
+#endif
 
     Serial.println(" HTTP/1.1");
     // sprintf(b,"Host: %s", server);
@@ -286,6 +314,10 @@ void sendPrintOrder() {
     delay(100);
 
     setProcessStep(processPrintData);
+
+    #if Adafruit
+    printer.wake();
+    #endif
 
     loop();
   }
@@ -401,11 +433,13 @@ void processIncoming() {
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
       Serial.println();
-
-#if Epson
-      TM88.cut();
+#if Adafruit
+      printer.sleep();
+      Serial.println("sleep");
 #endif
-
+#if Epson
+      printer.cut();
+#endif
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
     }
@@ -458,20 +492,33 @@ void processPrintChar(char c) {
       if (c=='[') { // control codes start with '[', so execute code
         c2 = client.read();
         switch(c2) {
-
 #if Epson
-          case 'B': TM88.boldOn(); break;
-          case 'b': TM88.boldOff(); break;
-          case 'D': TM88.doubleHeightOn(); break;
-          case 'd': TM88.doubleHeightOff(); break;
-          case 'R': TM88.reverseOn(); break;
-          case 'r': TM88.reverseOff(); break;
-          case 'U': TM88.underlineOn(); break;
-          case 'u': TM88.underlineOff(); break;
-          case 'F': TM88.feed(); break;
-          case 'C': TM88.cut(); break;
+          case 'B': printer.boldOn(); break;
+          case 'b': printer.boldOff(); break;
+          case 'D': printer.doubleHeightOn(); break;
+          case 'd': printer.doubleHeightOff(); break;
+          case 'R': printer.reverseOn(); break;
+          case 'r': printer.reverseOff(); break;
+          case 'U': printer.underlineOn(); break;
+          case 'u': printer.underlineOff(); break;
+          case 'F': printer.feed(); break;
+          case 'C': printer.cut(); break;
 #endif
-
+#if Adafruit
+          case 'B': printer.boldOn(); break;
+          case 'b': printer.boldOff(); break;
+          case 'D': printer.doubleHeightOn(); break;
+          case 'd': printer.doubleHeightOff(); break;
+          case 'R': printer.inverseOn(); break;
+          case 'r': printer.inverseOff(); break;
+          case 'U': printer.underlineOn(); break;
+          case 'u': printer.underlineOff(); break;
+          case 'F': printer.feed(1); break;
+          case 'C': printer.println();
+            printer.println('--------------------');
+            printer.println();
+            break;
+#endif
 #if DebugPrint
           case 'B': Serial.print("*** boldOn"); break;
           case 'b': Serial.print("*** boldOff"); break;
@@ -485,14 +532,17 @@ void processPrintChar(char c) {
           case 'C': Serial.print("*** cut"); break;
 #endif
           default: Serial.print("*** bad code "); Serial.println(c2);
-        }
+          }
+          c2 = client.read();
+          if (c2 != ']') Serial.print("*** missing ]");
         }
       else { // not a control code, so print it
-
-#if Epson
-        TM88.print(c);
+#if Adafruit
+        printer.print(c);
 #endif
-
+#if Epson
+        printer.print(c);
+#endif
 #if DebugPrint
         Serial.print(c);
 #endif
@@ -616,4 +666,6 @@ void showProcessStep() {
   Serial.print(" queue: ");
   Serial.println(numToPrint);
 }
+
+
 
