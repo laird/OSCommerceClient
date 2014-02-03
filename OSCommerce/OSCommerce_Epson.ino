@@ -33,11 +33,7 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
 int waitPollForOrders = 30000; // Look for orders every X ms
 
-// Buzzer
-#define Buzzer 0
-// Set to 0 if no buzzer is connected, set to 1 if we have one connected
-#define Buzzerport 2
-// What port do we have the buzzer on
+
 
 // LCD display
 #define LCD 0
@@ -61,10 +57,9 @@ int waitEthernetOn = 1000; // give ethernet board 1s to initialize
 
 // Buzzer stuff
 
-#if Buzzer
-const int Buzzer        =  Buzzerport;
+const int Buzzer        =  2; // Busser on digital 2 pin
 pinMode(Buzzer, OUTPUT);
-#endif
+
 
 // LCD stuff
 
