@@ -20,7 +20,8 @@
 //#include <EthernetUdp.h>
 #include <util.h>
 #include <LiquidCrystal.h>
-#include <thermalprinter.h> 
+//#include <Thermal.h> // for Adafruit
+#include <thermalprinter.h> // for Epson
 
 
 // ----- Config Section - Only change These -----
@@ -45,6 +46,11 @@ int waitPollForOrders = 30000; // Look for orders every X ms
 #define LCD 0
 // Define if we have one connected or set to 0 if we dont use LCD
 
+// Printer (Adafruit or Epson)
+//#define Adafruit 0
+// Define 1 if there's an adafruit type printer
+//#define Epson 1
+// Define 1 if there's an Epson TM-T88III Receipt printer
 #define DebugPrint 1
 // Define 1 to send printer output to serial debugger
 
@@ -91,8 +97,14 @@ EthernetClient client;
 
 // printer stuff,
 
-Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
 
+//#if Adafruit
+//Thermal printer = Thermal(printer_RX_Pin, printer_TX_Pin, 19200)
+//#endif
+
+//#if Epson
+Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
+//#endif
 
 // ---- other logic -----
 
@@ -157,10 +169,15 @@ void setup() {
 
   // --------------------set up printer --------------------
 
-
-  Serial.println(F("Set up printer"));
+//#if Adafruit
+//  Serial.println("Set up Adafruit printer");
+//  printer.sleep();
+//#endif
+//#if Epson
+  Serial.println(F("Set up Epson printer"));
   TM88.start();
-  TM88.characterSet(4);
+   TM88.characterSet(4);
+//#endif
 
   sendCheckOrders();
   }
@@ -265,7 +282,12 @@ void sendPrintOrder() {
     Serial.print("&o=");
     Serial.print(order);
     // append printer type, so server can format for the printer
-
+//#if Adafruit
+//    Serial.print("&p=Adafruit");
+//#endif
+//#if Epson
+//    Serial.print("&p=Epson");
+//#endif
 
     Serial.println(" HTTP/1.1");
     // sprintf(b,"Host: %s", server);
@@ -294,7 +316,9 @@ void sendPrintOrder() {
 
     setProcessStep(processPrintData);
 
-   
+//  #if Adafruit
+//    printer.wake();
+//    #endif
 
     loop();
   }
@@ -410,10 +434,15 @@ void processIncoming() {
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
       Serial.println();
+//#if Adafruit
+//      printer.sleep();
+//      Serial.println("sleep");
+//#endif
+
+TM88.cut();
 
 
-      TM88.cut();
-
+      //delay(1000); // testing
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
     }
@@ -454,19 +483,10 @@ void processPrintChar(char c) {
 
     if (state == inArgs) {
 
-      /* Formatting codes are:
-        [B] bold, [b] bold off
-        [U] underline, [u] underline off
-        [R] reverse (inverse), [r] reverse off
-        [D] double height, [d] standard height
-        [F] line feed
-        [C] cut (not needed - we cut between receipts)
-      */
-
       if (c=='[') { // control codes start with '[', so execute code
         c2 = client.read();
         switch(c2) {
-
+//#if Epson
           case 'B': TM88.boldOn(); break;
           case 'b': TM88.boldOff(); break;
           case 'D': TM88.doubleHeightOn(); break;
@@ -477,28 +497,44 @@ void processPrintChar(char c) {
           case 'u': TM88.underlineOff(); break;
           case 'F': TM88.feed(); break;
           case 'C': TM88.cut(); break;
-
-#if DebugPrint
-          case 'B': Serial.print("*** boldOn"); break;
-          case 'b': Serial.print("*** boldOff"); break;
-          case 'D': Serial.print("*** doubleHeightOn"); break;
-          case 'd': Serial.print("*** doubleHeightOff"); break;
-          case 'R': Serial.print("*** reverseOn"); break;
-          case 'r': Serial.print("*** reverseOff"); break;
-          case 'U': Serial.print("*** underlineOn"); break;
-          case 'u': Serial.print("*** underlineOff"); break;
-          case 'F': Serial.print("*** feed"); break;
-          case 'C': Serial.print("*** cut"); break;
-#endif
+//#endif
+//#if Adafruit
+//          case 'B': printer.boldOn(); break;
+//          case 'b': printer.boldOff(); break;
+//          case 'D': printer.doubleHeightOn(); break;
+//          case 'd': printer.doubleHeightOff(); break;
+//          case 'R': printer.inverseOn(); break;
+//          case 'r': printer.inverseOff(); break;
+//          case 'U': printer.underlineOn(); break;
+//          case 'u': printer.underlineOff(); break;
+//          case 'F': printer.feed(1); break;
+//          case 'C': printer.println();
+//      printer.println('--------------------');
+//        printer.println();
+//      break;
+//#endif
+//#if DebugPrint
+//          case 'B': Serial.print("*** boldOn"); break;
+//          case 'b': Serial.print("*** boldOff"); break;
+//          case 'D': Serial.print("*** doubleHeightOn"); break;
+//          case 'd': Serial.print("*** doubleHeightOff"); break;
+//          case 'R': Serial.print("*** reverseOn"); break;
+//          case 'r': Serial.print("*** reverseOff"); break;
+//          case 'U': Serial.print("*** underlineOn"); break;
+//          case 'u': Serial.print("*** underlineOff"); break;
+//          case 'F': Serial.print("*** feed"); break;
+//          case 'C': Serial.print("*** cut"); break;
+//#endif
           default: Serial.print("*** bad code "); Serial.println(c2);
           }
-          c2 = client.read();
-          if (c2 != ']') Serial.print("*** missing ]");
         }
       else { // not a control code, so print it
-
-        printer.print(c);
-
+//#if Adafruit
+//        printer.print(c);
+//#endif
+//#if Epson
+        TM88.print(c);
+//#endif
 #if DebugPrint
         Serial.print(c);
 #endif
@@ -622,5 +658,4 @@ void showProcessStep() {
   Serial.print(" queue: ");
   Serial.println(numToPrint);
 }
-
 
