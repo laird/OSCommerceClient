@@ -31,7 +31,7 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 //IPAddress server(87,51,52,114); // example, if you want to use IP address
 
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
-int waitPollForOrders = 30000; // Look for orders every X ms
+int waitPollForOrders = 5000; // Look for orders every X ms
 
 #define Epsontm88 1
 // Define 1 to send printer output to Epson printer
@@ -49,7 +49,7 @@ const int maxNumToPrint = 1; // Print only this many orders in a batch (because 
 
 // wait times, in ms
 
-int waitEthernetOn = 1000; // give ethernet board 1s to initialize
+int waitEthernetOn = 2000; // give ethernet board 1s to initialize
 
 // Buzzer stuff
 
@@ -398,27 +398,32 @@ void processIncoming() {
       Serial.println("*** END PRINTING ***");
       Serial.println();
       
-#if Epsontm88
-      TM88.cut();
-#endif
 
+      
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
+      
     }
 
     // When done reporting an order processed, move on to print the next order
     if (processStep == processReportData) {
       Serial.println("*** done processing return from reporting progress");
       order = 0;
+     
       if (numToPrint>0) {
         setProcessStep(requestPrint); // if any more to print, do one
         sendPrintOrder();
       }
+       
     }
 
     // if there's nothing else to do, wait 30 seconds, then check for orders
     Serial.println("waitPollForOrders");
+    
     delay(waitPollForOrders);
+    
+    TM88.cut();
+    
     setProcessStep(requestOrders);
     sendCheckOrders();
   }
