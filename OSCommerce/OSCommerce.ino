@@ -83,11 +83,7 @@ EthernetClient client;
 
 // printer stuff,
 
-<<<<<<< HEAD
 #if EpsonPrint
-=======
-#if Epsontm88
->>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
 Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
 #endif
 
@@ -156,11 +152,7 @@ void setup() {
 
 
   Serial.println(F("Set up printer"));
-<<<<<<< HEAD
 #if EpsonPrint
-=======
-#if Epsontm88
->>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
   TM88.start();
   TM88.characterSet(4);
 #endif
@@ -393,46 +385,39 @@ void processIncoming() {
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
       Serial.println();
-      
-
-<<<<<<< HEAD
 #if EpsonPrint
       TM88.cut();
 #endif
-
-=======
-      
->>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
-      
+
     }
 
     // When done reporting an order processed, move on to print the next order
     if (processStep == processReportData) {
       Serial.println("*** done processing return from reporting progress");
       order = 0;
-     
+
       if (numToPrint>0) {
         setProcessStep(requestPrint); // if any more to print, do one
         sendPrintOrder();
       }
-       
+
     }
 
     // if there's nothing else to do, wait 30 seconds, then check for orders
     Serial.println("waitPollForOrders");
-    
+
     delay(waitPollForOrders);
-    
+
     Serial.println("cutting");
-    
+
     TM88.cut();
-    
+
     Serial.println("10 sec delay");
-    
+
     delay(10000);
-    
+
     setProcessStep(requestOrders);
     sendCheckOrders();
   }
@@ -469,11 +454,7 @@ void processPrintChar(char c) {
         c2 = client.read();
         switch(c2) {
 
-<<<<<<< HEAD
 #if EpsonPrint
-=======
-#if Epsontm88
->>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
           case 'B': TM88.boldOn(); break;
           case 'b': TM88.boldOff(); break;
           case 'D': TM88.doubleHeightOn(); break;
@@ -484,7 +465,7 @@ void processPrintChar(char c) {
           case 'u': TM88.underlineOff(); break;
           case 'F': TM88.feed(); break;
           case 'C': TM88.cut(); break;
-          
+
 #endif
 
 #if DebugPrint
@@ -504,13 +485,8 @@ void processPrintChar(char c) {
         }
       else { // not a control code, so print it
 
-<<<<<<< HEAD
 #if EpsonPrint
-=======
-#if Epsontm88
->>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
         TM88.print(c);
-         
 #endif
 
 #if DebugPrint
