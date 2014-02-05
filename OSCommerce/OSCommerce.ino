@@ -204,7 +204,7 @@ void sendCheckOrders() {
   char b[100]="";
   startEthernet();
   // if you get a connection, report back via serial:
-  if (client.connect(server, 80)) {
+  if (client.connected()) {
     Serial.println("connected for orders");
     // Make a HTTP request:
 
@@ -247,7 +247,7 @@ void sendPrintOrder() {
 
   startEthernet();
   // if you get a connection, report back via serial:
-  if (client.connect(server, 80)) {
+  if (client.connected()) {
     Serial.println("*** Print order.");
     // Make a HTTP request:
 
@@ -299,7 +299,7 @@ void sendProcessingOrder() {
 
   startEthernet();
   // if you get a connection, report back via serial:
-  if (client.connect(server, 80)) {
+  if (client.connected()) {
     Serial.print("Reporting order ");
     Serial.print(order);
     Serial.println(" processed.");
@@ -382,7 +382,9 @@ void processIncoming() {
       Serial.println("*** END PRINTING ***");
       Serial.println();
 #if EpsonPrint
+      delay(1000);
       TM88.cut();
+      delay(1000);
 #endif
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
@@ -401,18 +403,14 @@ void processIncoming() {
 
     }
 
-    // if there's nothing else to do, wait 30 seconds, then check for orders
+    // if there's nothing else to do, wait waitPollForOrders/1000 seconds, then check for orders
     Serial.println("waitPollForOrders");
 
     delay(waitPollForOrders);
 
-    Serial.println("cutting");
+    //Serial.println("cutting");
 
-    TM88.cut();
-
-    Serial.println("10 sec delay");
-
-    delay(10000);
+    //TM88.cut();
 
     setProcessStep(requestOrders);
     sendCheckOrders();
@@ -460,7 +458,7 @@ void processPrintChar(char c) {
           case 'U': TM88.underlineOn(); break;
           case 'u': TM88.underlineOff(); break;
           case 'F': TM88.feed(); break;
-          case 'C': TM88.cut(); break;
+          case 'C': delay(1000); TM88.cut(); delay(1000); break;
 
 #endif
 
