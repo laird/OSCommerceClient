@@ -34,7 +34,7 @@ String securityCode = "1234"; // unique for each customer. Not really secure, bu
 int waitPollForOrders = 30000; // Look for orders every X ms
 
 // Define one as 1 and the other(s) as 0.
-#define Epson 1
+#define EpsonPrint 1
 // Define 1 to send printer output to Epson printer
 #define DebugPrint 0
 // Define 1 to send printer output to serial debugger
@@ -82,7 +82,7 @@ EthernetClient client;
 
 // printer stuff,
 
-#if Epson>0
+#if EpsonPrint
 Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
 #endif
 
@@ -151,7 +151,7 @@ void setup() {
 
 
   Serial.println(F("Set up printer"));
-#if Epson
+#if EpsonPrint
   TM88.start();
   TM88.characterSet(4);
 #endif
@@ -178,17 +178,28 @@ void loop() {
     }
   }
 
+// Start the ethernet board and connect to the server
+
 void startEthernet() {
   // start the Ethernet connection:
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
-    // no point in carrying on, so do nothing forevermore:
-    // try to congifure using IP address instead of DHCP:
+    Serial.print("Failed to configure Ethernet using DHCP, using fixed IP address ");
+    Serial.println(ip);
+    // if DHCP fails, use fixed IP address
     Ethernet.begin(mac, ip);
   }
   // give the Ethernet shield a second to initialize:
   delay(waitEthernetOn);
-  Serial.println("Connecting...");
+  while(!client.connected()) {
+    Serial.println("Connecting...");
+    if (client.connect(server, 80)) {
+      Serial.println("Connected");
+      }
+    else {
+      Serial.println("Not connected");
+      delay(1000);
+      }
+    }
   }
 
 // Check orders
@@ -199,13 +210,6 @@ void sendCheckOrders() {
   if (client.connect(server, 80)) {
     Serial.println("connected for orders");
     // Make a HTTP request:
-
-    //sprintf(b, "GET /arduino1.php?sc=%s HTTP/1.1", securityCode);
-    //client.println(b);
-    //Serial.println(b);
-    //sprintf(b, "Host: %s", server);
-    //client.println(b);
-    //Serial.println(b);
 
     Serial.print("GET /arduino1.php?sc=");
     Serial.print(securityCode);
@@ -249,9 +253,6 @@ void sendPrintOrder() {
   if (client.connect(server, 80)) {
     Serial.println("*** Print order.");
     // Make a HTTP request:
-    // sprintf(b,"GET /arduino3.php?sc=1234&o=%s HTTP/1.1", order);
-    // Serial.println(b);
-    // client.println(b);
 
     Serial.print("GET /arduino3.php?sc=");
     Serial.print(securityCode);
@@ -259,25 +260,17 @@ void sendPrintOrder() {
     Serial.print(order);
     // append printer type, so server can format for the printer
 
-
     Serial.println(" HTTP/1.1");
-    // sprintf(b,"Host: %s", server);
-    // Serial.println(b);
-    // Serial.println(b);
     Serial.print("Host: ");
     Serial.println(server);
     Serial.println("Connection: close");
     Serial.println();
-
 
     client.print("GET /arduino3.php?sc=");
     client.print(securityCode);
     client.print("&o=");
     client.print(order);
     client.println(" HTTP/1.1");
-    // sprintf(b,"Host: %s", server);
-    // client.println(b);
-    // Serial.println(b);
     client.print("Host: ");
     client.println(server);
     client.println("Connection: close");
@@ -322,24 +315,14 @@ void sendProcessingOrder() {
     Serial.println("&s=processing HTTP/1.1");
     Serial.print("Host: ");
     Serial.println(server);
-    // sprintf(b,"Host: %s", server);
-    // Serial.println(b);
-    // Serial.println(b);
     Serial.println("Connection: close");
     Serial.println();
 
-
-    // sprintf(b,"GET /arduino4.php?sc=1234&o=%d&s=processing HTTP/1.1", order);
-    // client.println(b);
-    // Serial.println(b);
     client.print("GET /arduino4.php?sc=1234&o=");
     client.print(order);
     client.println("&s=processing HTTP/1.1");
     client.print("Host: ");
     client.println(server);
-    // sprintf(b,"Host: %s", server);
-    // client.println(b);
-    // Serial.println(b);
     client.println("Connection: close");
     client.println();
 
@@ -402,7 +385,7 @@ void processIncoming() {
       Serial.println("*** END PRINTING ***");
       Serial.println();
 
-#if Epson
+#if EpsonPrint
       TM88.cut();
 #endif
 
@@ -459,7 +442,7 @@ void processPrintChar(char c) {
         c2 = client.read();
         switch(c2) {
 
-#if Epson
+#if EpsonPrint
           case 'B': TM88.boldOn(); break;
           case 'b': TM88.boldOff(); break;
           case 'D': TM88.doubleHeightOn(); break;
@@ -489,7 +472,7 @@ void processPrintChar(char c) {
         }
       else { // not a control code, so print it
 
-#if Epson
+#if EpsonPrint
         TM88.print(c);
 #endif
 
