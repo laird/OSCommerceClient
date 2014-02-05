@@ -178,15 +178,17 @@ void loop() {
 // Start the ethernet board and connect to the server
 
 void startEthernet() {
-  // start the Ethernet connection:
-  if (Ethernet.begin(mac) == 0) {
-    Serial.print("Failed to configure Ethernet using DHCP, using fixed IP address ");
-    Serial.println(ip);
-    // if DHCP fails, use fixed IP address
-    Ethernet.begin(mac, ip);
+  if (!client) {
+    // start the Ethernet connection:
+    if (Ethernet.begin(mac) == 0) {
+      Serial.print("Failed to configure Ethernet using DHCP, using fixed IP address ");
+      Serial.println(ip);
+      // if DHCP fails, use fixed IP address
+      Ethernet.begin(mac, ip);
+    }
+    // give the Ethernet shield a second to initialize:
+    delay(waitEthernetOn);
   }
-  // give the Ethernet shield a second to initialize:
-  delay(waitEthernetOn);
   while(!client.connected()) {
     Serial.println("Connecting...");
     if (client.connect(server, 80)) {
