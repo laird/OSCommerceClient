@@ -31,7 +31,6 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 //IPAddress server(87,51,52,114); // example, if you want to use IP address
 
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
-int waitPollForOrders = 30000; // Look for orders every X ms
 
 // Define one as 1 and the other(s) as 0.
 #define EpsonPrint 1
