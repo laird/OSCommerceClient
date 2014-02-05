@@ -31,7 +31,7 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 //IPAddress server(87,51,52,114); // example, if you want to use IP address
 
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
-int waitPollForOrders = 5000; // Look for orders every X ms
+int waitPollForOrders = 10000; // Look for orders every X ms
 
 #define Epsontm88 1
 // Define 1 to send printer output to Epson printer
@@ -422,7 +422,13 @@ void processIncoming() {
     
     delay(waitPollForOrders);
     
+    Serial.println("cutting");
+    
     TM88.cut();
+    
+    Serial.println("10 sec delay");
+    
+    delay(10000);
     
     setProcessStep(requestOrders);
     sendCheckOrders();
