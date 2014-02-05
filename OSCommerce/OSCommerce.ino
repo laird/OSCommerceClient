@@ -33,12 +33,8 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
 int waitPollForOrders = 10000; // Look for orders every X ms
 
-<<<<<<< HEAD
 // Define one as 1 and the other(s) as 0.
 #define EpsonPrint 1
-=======
-#define Epsontm88 1
->>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
 // Define 1 to send printer output to Epson printer
 #define DebugPrint 0
 // Define 1 to send printer output to serial debugger
