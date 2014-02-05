@@ -31,9 +31,14 @@ const char server[] = "87.51.52.114";    // name address for server (using DNS)
 //IPAddress server(87,51,52,114); // example, if you want to use IP address
 
 String securityCode = "1234"; // unique for each customer. Not really secure, but better than nothing.
+int waitPollForOrders = 10000; // Look for orders every X ms
 
+<<<<<<< HEAD
 // Define one as 1 and the other(s) as 0.
 #define EpsonPrint 1
+=======
+#define Epsontm88 1
+>>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
 // Define 1 to send printer output to Epson printer
 #define DebugPrint 0
 // Define 1 to send printer output to serial debugger
@@ -41,9 +46,7 @@ String securityCode = "1234"; // unique for each customer. Not really secure, bu
 int printer_RX_Pin = 6; // port that the RX line is connected to
 int printer_TX_Pin = 7; // port that the TX line is connected to
 
-#define LCD 0
-
-const int maxNumToPrint = 2; // Print only this many orders in a batch (because we used a fixed size array queue)
+const int maxNumToPrint = 1; // Print only this many orders in a batch (because we used a fixed size array queue)
 
 #define debugNetIn 0
 
@@ -51,7 +54,7 @@ const int maxNumToPrint = 2; // Print only this many orders in a batch (because 
 
 // wait times, in ms
 
-int waitEthernetOn = 1000; // give ethernet board 1s to initialize
+int waitEthernetOn = 2000; // give ethernet board 1s to initialize
 
 // Buzzer stuff
 
@@ -60,9 +63,8 @@ int waitEthernetOn = 1000; // give ethernet board 1s to initialize
 
 // LCD stuff
 
-#if LCD
-LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
-#endif
+//LiquidCrystal lcd(3,5,6,7,8,9);  // These are the pins used for the parallel LCD
+
 
 // --------------------ethernet stuff--------------------
 
@@ -81,7 +83,11 @@ EthernetClient client;
 
 // printer stuff,
 
+<<<<<<< HEAD
 #if EpsonPrint
+=======
+#if Epsontm88
+>>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
 Epson TM88 = Epson(printer_RX_Pin, printer_TX_Pin); // Init Epson TM-T88III Receipt printer
 #endif
 
@@ -141,16 +147,20 @@ void setup() {
 
   // --------------------set up LCD--------------------
 
-#if LCD
-  Serial.println(F("Set up LCD"));
-  lcd.begin(20,4);
-#endif
+
+//  Serial.println(F("Set up LCD"));
+//  lcd.begin(20,4);
+
 
   // --------------------set up printer --------------------
 
 
   Serial.println(F("Set up printer"));
+<<<<<<< HEAD
 #if EpsonPrint
+=======
+#if Epsontm88
+>>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
   TM88.start();
   TM88.characterSet(4);
 #endif
@@ -383,28 +393,46 @@ void processIncoming() {
     if (processStep==processPrintData) {
       Serial.println("*** END PRINTING ***");
       Serial.println();
+      
 
+<<<<<<< HEAD
 #if EpsonPrint
       TM88.cut();
 #endif
 
+=======
+      
+>>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
       setProcessStep(reportProcessing);
       sendProcessingOrder();  // and report that the order is being processed
+      
     }
 
     // When done reporting an order processed, move on to print the next order
     if (processStep == processReportData) {
       Serial.println("*** done processing return from reporting progress");
       order = 0;
+     
       if (numToPrint>0) {
         setProcessStep(requestPrint); // if any more to print, do one
         sendPrintOrder();
       }
+       
     }
 
     // if there's nothing else to do, wait 30 seconds, then check for orders
     Serial.println("waitPollForOrders");
+    
     delay(waitPollForOrders);
+    
+    Serial.println("cutting");
+    
+    TM88.cut();
+    
+    Serial.println("10 sec delay");
+    
+    delay(10000);
+    
     setProcessStep(requestOrders);
     sendCheckOrders();
   }
@@ -441,7 +469,11 @@ void processPrintChar(char c) {
         c2 = client.read();
         switch(c2) {
 
+<<<<<<< HEAD
 #if EpsonPrint
+=======
+#if Epsontm88
+>>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
           case 'B': TM88.boldOn(); break;
           case 'b': TM88.boldOff(); break;
           case 'D': TM88.doubleHeightOn(); break;
@@ -452,6 +484,7 @@ void processPrintChar(char c) {
           case 'u': TM88.underlineOff(); break;
           case 'F': TM88.feed(); break;
           case 'C': TM88.cut(); break;
+          
 #endif
 
 #if DebugPrint
@@ -471,8 +504,13 @@ void processPrintChar(char c) {
         }
       else { // not a control code, so print it
 
+<<<<<<< HEAD
 #if EpsonPrint
+=======
+#if Epsontm88
+>>>>>>> 9532dd8aa0cf4e24985c693176c1617924dce6ae
         TM88.print(c);
+         
 #endif
 
 #if DebugPrint
@@ -598,4 +636,3 @@ void showProcessStep() {
   Serial.print(" queue: ");
   Serial.println(numToPrint);
 }
-
