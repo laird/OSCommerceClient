@@ -189,6 +189,9 @@ void startEthernet() {
     // give the Ethernet shield a second to initialize:
     delay(waitEthernetOn);
   }
+
+  // try very hard to get ethernet and client connection
+
   while(!client.connected()) {
     Serial.println("Connecting...");
     if (client.connect(server, 80)) {
@@ -196,14 +199,24 @@ void startEthernet() {
       }
     else {
       Serial.println("Not connected");
+      client.stop();
       delay(1000);
+      Serial.println("Restarting ethernet.");
+      if (Ethernet.begin(mac) == 0) {
+        Serial.print("Failed to configure Ethernet using DHCP, using fixed IP address ");
+        Serial.println(ip);
+        // if DHCP fails, use fixed IP address
+        Ethernet.begin(mac, ip);
+      }
+    // give the Ethernet shield a second to initialize:
+    delay(waitEthernetOn);
       }
     }
   }
 
 // Check orders
 void sendCheckOrders() {
-  char b[100]="";
+  //char b[100]="";
   startEthernet();
   // if you get a connection, report back via serial:
   if (client.connected()) {
@@ -243,7 +256,7 @@ void sendCheckOrders() {
 // and call http://87.51.52.114/arduino4.php?sc=1234&o=69&s=processing
 
 void sendPrintOrder() {
-  char b[100]="";
+  //char b[100]="";
   if (numToPrint<1) return;
   order = getOrderToPrint();
 
