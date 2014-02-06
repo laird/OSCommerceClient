@@ -322,7 +322,7 @@ void sendProcessingOrder() {
     Serial.println("connected for print");
     // Make a HTTP request:
 
-    Serial.print("GET /arduino4.php?sc=1234&o=");
+    Serial.print("GET /arduino5.php?sc=1234&o=");
     Serial.print(order);
     Serial.println("&s=processing HTTP/1.1");
     Serial.print("Host: ");
@@ -330,7 +330,7 @@ void sendProcessingOrder() {
     Serial.println("Connection: close");
     Serial.println();
 
-    client.print("GET /arduino4.php?sc=1234&o=");
+    client.print("GET /arduino5.php?sc=1234&o=");
     client.print(order);
     client.println("&s=processing HTTP/1.1");
     client.print("Host: ");
