@@ -1,5 +1,9 @@
 __author__ = 'laird'
-
+#
+# OSCommerceClient.py
+#
+# Polls an OSCommerce site and pulls down a list of pending orders, prints them, and sets their status to 'processing'
+#
 # uses requests from http://docs.python-requests.org/en/latest/user/install/#distribute-pip
 
 import logging
@@ -33,68 +37,96 @@ ordersToConfirm = Queue.Queue();
 
 # poll for orders, add any pending to queue for processing
 
-def pollForUpdates(ordersToPrint):
+def pollForUpdates(ordersToPrint, ordersToConfirm):
     "Poll for pending orders, add them to queue to print"
-    logging.info("poll for orders")
+    print "starting poll worker"
+    while True:
+        print "poll for orders"
 
-    url = "http://"+server+pollPage;
-    payload = {'sc': securityCode};
-    pollResult = requests.get(url, params=payload);
+        url = "http://"+server+pollPage;
+        payload = {'sc': securityCode};
+        pollResult = requests.get(url, params=payload);
 
-    orders=pollResult.text.split(',');
+        orders=pollResult.text.split(',');
 
-    for order in orders:
-        # strip out formatting
-        order = order.replace("[",""); # ignore starting [
-        order = order.replace("<br />",""); # ignore break between lines
-        order = order.replace("OK]",""); # ignore end OK]
+        for order in orders:
+            # strip out formatting
+            order = order.replace("[",""); # ignore starting [
+            order = order.replace("<br />",""); # ignore break between lines
+            #order = order.replace("OK]",""); # ignore end OK]
 
-        logging.debug("processing order "+order);
-        vals = order.split();
-        if (len(vals) == 2):
-            orderNum = int(vals[0]);
-            status = int(vals[1]);
-            logging.debug("found order "+str(orderNum)+" status "+str(status)+",")
-            if (status == 1):
-                logging.info("que order "+str(orderNum));
-                ordersToPrint.put(orderNum)
+            logging.debug("processing order "+order);
+            vals = order.split();
+            if (len(vals) == 2):
+                orderNum = int(vals[0]);
+                status = int(vals[1]);
+                logging.debug("found order "+str(orderNum)+" status "+str(status)+",")
+                if (status == 1):
+                    print "queue order %i to print." % orderNum
+                    ordersToPrint.put(orderNum)
+                else:
+                    logging.debug("skip order "+str(orderNum));
             else:
-                logging.debug("skip order "+str(orderNum));
-        else:
-            if order=="OK]":
-                logging.debug("end of list");
-            else:
-                logging.warn("Found bad order "+order);
+                if order=="OK]":
+                    logging.debug("OK at end of list");
+                else:
+                    logging.warn("Found bad order "+order);
 
-    logging.debug("received "+str(len(orders)-1)+" orders.")
+        time.sleep(waitPollForOrders)
+
 
 def printOrders(ordersToPrint, ordersToConfirm):
-    "print a queued order, then queue it to confirm"
-    order = ordersToPrint.get()
-    logging.info("printing order "+order+".")
+    "worker thread to print a queued order, then queue it to confirm"
+    print "starting print worker"
+    while True:
+        order = ordersToPrint.get()
+        print "printing order %i ." % +order
 
-    url = "http://"+server+detailPage;
-    payload = {'sc': securityCode, "o": order};
-    printResult = requests.get(url, params=payload);
+        url = "http://"+server+detailPage;
+        payload = {'sc': securityCode, "o": order};
+        printResult = requests.get(url, params=payload);
 
-    logging.info("Print: "+printResult.text)
+        print printResult.text
 
-    ordersToConfirm.put(order) # if successful. if failed, add back to queue to print
+        ordersToConfirm.put(order) # if successful. if failed, add back to queue to print
+        ordersToPrint.task_done()
 
-def confirmOrders(ordersToConfirm):
-    "send confirmation message"
-    order = ordersToConfirm.get()
-    logging.info("confirming order "+order+".")
+def confirmOrders(ordersToPrint, ordersToConfirm):
+    "worker thread to send confirmation message"
+    print "starting confirm worker"
+    while True:
+        order = ordersToConfirm.get()
+        print "confirming order "+order+"."
+
+        url = "http://"+server+setPage;
+        payload = {'sc': securityCode, "o": order, "s":"processing"};
+        printResult = requests.get(url, params=payload);
+        ordersToConfirm.task_done()
+
+# start workers
+
+pollWorker = Thread(target=pollForUpdates, args=(ordersToPrint, ordersToConfirm))
+pollWorker.setDaemon(True)
+pollWorker.start()
+
+printWorker = Thread(target=printOrders, args=(ordersToPrint, ordersToConfirm))
+printWorker.setDaemon(True)
+printWorker.start()
+
+confirmWorker = Thread(target=confirmOrders, args=(ordersToPrint, ordersToConfirm))
+confirmWorker.setDaemon(True)
+confirmWorker.start();
+
+# sit back and relax while the workers work
 
 # do everything here
-while True:
-    # top priority confirm an order
-    while not ordersToConfirm.empty():
-        confirmOrder(ordersToConfirm, ordersToPrint)
-        # second priority print an order
-        while not ordersToPrint.empty():
-            printOrder(ordersToPrint)
-            # lowest priority poll for orders
-    time.sleep(waitPollForOrders)
-    pollForUpdates(ordersToPrint)
+# while True:
+#     # top priority confirm an order
+#     while not ordersToConfirm.empty():
+#         confirmOrder(ordersToConfirm, ordersToPrint)
+#         # second priority print an order
+#         while not ordersToPrint.empty():
+#             printOrder(ordersToPrint)
+#             # lowest priority poll for orders
+#     pollForUpdates(ordersToPrint)
 
