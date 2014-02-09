@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 __author__ = 'laird'
 #
 # OSCommerceClient.py
@@ -11,6 +13,7 @@ import requests
 import Queue
 from threading import Thread
 import time
+import argparse
 
 # configuration
 
@@ -25,10 +28,20 @@ setPage = "/arduino4.php" # set status of an order
 waitPollForOrders = 30 # wait 30 seconds between polls
 maxNumToPrint = 5
 
+# parse command line arguments
+
+parser = argparse.ArgumentParser(description='This is the OSCommerce client by laird.', epilog="set either poll or reset, not both.")
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help='poll for new orders')
+group.add_argument('-r','--reset', action='store_true', help='reset orders to pending')
+args = parser.parse_args()
+
+if args.poll: waitPollForOrders=args.poll
+
 # setup
 
-order = ""
-orders = []
+#order = ""
+#orders = []
 
 # queue of orders received in polling that need to be printed
 ordersToPrint = Queue.Queue()
@@ -103,19 +116,28 @@ def confirmOrders(ordersToPrint, ordersToConfirm):
         printResult = requests.get(url, params=payload);
         ordersToConfirm.task_done()
 
-# start workers
+if args.reset:
+    print "Sorry, I don't know how to reset orders yet."
 
-pollWorker = Thread(target=pollForUpdates, args=(ordersToPrint, ordersToConfirm))
-pollWorker.setDaemon(True)
-pollWorker.start()
+else:
+    if args.poll:
+        print "Starting polling"
 
-printWorker = Thread(target=printOrders, args=(ordersToPrint, ordersToConfirm))
-printWorker.setDaemon(True)
-printWorker.start()
+        pollWorker = Thread(target=pollForUpdates, args=(ordersToPrint, ordersToConfirm))
+        pollWorker.setDaemon(True)
+        pollWorker.start()
 
-confirmWorker = Thread(target=confirmOrders, args=(ordersToPrint, ordersToConfirm))
-confirmWorker.setDaemon(True)
-confirmWorker.start();
+        printWorker = Thread(target=printOrders, args=(ordersToPrint, ordersToConfirm))
+        printWorker.setDaemon(True)
+        printWorker.start()
+
+        confirmWorker = Thread(target=confirmOrders, args=(ordersToPrint, ordersToConfirm))
+        confirmWorker.setDaemon(True)
+        confirmWorker.start();
+
+        while True:
+            time.sleep(60)
+            print "bored"
 
 # sit back and relax while the workers work
 
