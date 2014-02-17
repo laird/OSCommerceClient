@@ -100,6 +100,8 @@ def printOrders(ordersToPrint, ordersToConfirm):
         printResult = requests.get(url, params=payload);
 
         print printResult.text
+        Epson.text(printResult.text)
+        Epson.cut()
 
         ordersToConfirm.put(order) # if successful. if failed, add back to queue to print
         ordersToPrint.task_done()
