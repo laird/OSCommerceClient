@@ -23,7 +23,7 @@ securityCode = "1234"
 pollPage = "/arduino1.php" # poll for orders
 detailPage = "/arduino3.php" # get text of receipt to print
 setPage = "/arduino4.php" # set status of an order
-Epson = printer.Serial("/dev/ttyp0")
+Epson = printer.Serial("/dev/tty0")
 
 havePrinter = False
 
