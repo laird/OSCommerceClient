@@ -25,6 +25,8 @@ detailPage = "/arduino3.php" # get text of receipt to print
 setPage = "/arduino4.php" # set status of an order
 Epson = printer.Serial("/dev/ttyp0")
 
+havePrinter = False
+
 # Standard
 
 waitPollForOrders = 30 # wait 30 seconds between polls
@@ -84,8 +86,8 @@ def pollForUpdates(ordersToPrint, ordersToConfirm):
             else:
                 if order=="OK]":
                     logging.debug("OK at end of list");
-                else:
-                    logging.warn("Found bad order "+order);
+                #else:
+                    #logging.warn("Found bad order "+order);
 
         time.sleep(waitPollForOrders)
 
@@ -108,32 +110,32 @@ def printOrders(ordersToPrint, ordersToConfirm):
             if not first: # don't try to parse control code from first text block because it doesn't have one
                 first = False
                 if (c == 'B'):
-                    Epson.set(type="B")
+                    if havePrinter: Epson.set(type="B")
                     print "<b>"
                 elif (c == 'b'):
-                    Epson.set(type="normal")
+                    if havePrinter: Epson.set(type="normal")
                     print "</b>"
                 elif (c == 'U'):
-                    Epson.set(type="U")
+                    if havePrinter: Epson.set(type="U")
                     print "<u>"
                 elif (c == 'u'):
-                    Epson.set(type="normal")
+                    if havePrinter: Epson.set(type="normal")
                     print "</u>"
                 elif (c == 'D'):
-                    Epson.set(width=2, height=2)
+                    if havePrinter: Epson.set(width=2, height=2)
                     print "<double>"
                 elif (c == 'd'):
-                    Epson.set(width=1, height=1)
+                    if havePrinter: Epson.set(width=1, height=1)
                     print "</double>"
                 elif (c == 'F'):
-                    Epson.control("FF")
+                    if havePrinter: Epson.control("FF")
                     println
                 else:
                     print "<Bad formatting code ["+c+" >"
-            #Epson.text(text) # print out the text
+            if havePrinter: Epson.text(text) # print out the text
             print text
 
-        Epson.cut()
+        if havePrinter: Epson.cut()
 
         ordersToConfirm.put(order) # if successful. if failed, add back to queue to print
         ordersToPrint.task_done()
@@ -143,7 +145,7 @@ def confirmOrders(ordersToPrint, ordersToConfirm):
     print "starting confirm worker"
     while True:
         order = ordersToConfirm.get()
-        print "confirming order "+order+"."
+        print "confirming order "+str(order)+"."
 
         url = "http://"+server+setPage;
         payload = {'sc': securityCode, "o": order, "s":"processing"};

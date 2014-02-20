@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="e84ad34e-9e92-4e68-8d1b-f33df6e9b58a" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/OSCommerceClient.py" afterPath="$PROJECT_DIR$/OSCommerceClient.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="PythonClient.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -29,7 +28,7 @@
       <file leaf-file-name="OSCommerceClient.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/OSCommerceClient.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="107" column="109" selection-start="3658" selection-end="3658" vertical-scroll-proportion="2.101576" vertical-offset="405" max-vertical-offset="2715">
+            <state line="35" column="0" selection-start="798" selection-end="798" vertical-scroll-proportion="0.021067416" vertical-offset="510" max-vertical-offset="2745">
               <folding>
                 <element signature="e#280#294#0" expanded="true" />
               </folding>
@@ -40,7 +39,7 @@
       <file leaf-file-name="escpos.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python-escpos-1.0-1/escpos/escpos.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="10" column="1" selection-start="183" selection-end="183" vertical-scroll-proportion="0.0" vertical-offset="2" max-vertical-offset="4200">
+            <state line="8" column="0" selection-start="157" selection-end="209" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4200">
               <folding />
             </state>
           </provider>
@@ -80,8 +79,8 @@
   <component name="ProjectFrameBounds">
     <option name="x" value="47" />
     <option name="y" value="108" />
-    <option name="width" value="1400" />
-    <option name="height" value="1000" />
+    <option name="width" value="1417" />
+    <option name="height" value="1141" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -447,18 +446,18 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="47" y="108" width="1400" height="1000" extended-state="0" />
+    <frame x="47" y="108" width="1417" height="1141" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.27357143" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.27028933" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39957035" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32867885" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.28544775" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -588,13 +587,6 @@
         <state line="253" column="68" selection-start="7054" selection-end="7079" vertical-scroll-proportion="0.0" vertical-offset="3597" max-vertical-offset="9435" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python-escpos-1.0-1/escpos/escpos.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="1" selection-start="183" selection-end="183" vertical-scroll-proportion="0.0" vertical-offset="2" max-vertical-offset="4200">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///Library/Python/2.7/site-packages/escpos/escpos.py">
       <provider selected="true" editor-type-id="text-editor">
         <state line="178" column="29" selection-start="5350" selection-end="5350" vertical-scroll-proportion="0.0" vertical-offset="2306" max-vertical-offset="4185">
@@ -604,9 +596,16 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/python-escpos-1.0-1/escpos/escpos.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="8" column="0" selection-start="157" selection-end="209" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4200">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/OSCommerceClient.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="107" column="109" selection-start="3658" selection-end="3658" vertical-scroll-proportion="2.101576" vertical-offset="405" max-vertical-offset="2715">
+        <state line="35" column="0" selection-start="798" selection-end="798" vertical-scroll-proportion="0.021067416" vertical-offset="510" max-vertical-offset="2745">
           <folding>
             <element signature="e#280#294#0" expanded="true" />
           </folding>
