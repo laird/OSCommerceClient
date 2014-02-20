@@ -14,6 +14,7 @@ import Queue
 from threading import Thread
 import time
 import argparse
+from escpos import *
 
 # configuration
 
@@ -22,6 +23,7 @@ securityCode = "1234"
 pollPage = "/arduino1.php" # poll for orders
 detailPage = "/arduino3.php" # get text of receipt to print
 setPage = "/arduino4.php" # set status of an order
+Epson = printer.Serial("/dev/ttyp0")
 
 # Standard
 
@@ -66,7 +68,7 @@ def pollForUpdates(ordersToPrint, ordersToConfirm):
             # strip out formatting
             order = order.replace("[",""); # ignore starting [
             order = order.replace("<br />",""); # ignore break between lines
-            #order = order.replace("OK]",""); # ignore end OK]
+            order = order.replace("OK]",""); # ignore end OK]
 
             logging.debug("processing order "+order);
             vals = order.split();
@@ -98,9 +100,39 @@ def printOrders(ordersToPrint, ordersToConfirm):
         url = "http://"+server+detailPage;
         payload = {'sc': securityCode, "o": order};
         printResult = requests.get(url, params=payload);
+        textBlocks = printResult.text.split("[")
+        first=True
+        for textBlock in textBlocks[1:]: # skip first text block
+            c = textBlock[0] # first character is formatting command
+            text = textBlock[1:]
+            if not first: # don't try to parse control code from first text block because it doesn't have one
+                first = False
+                if (c == 'B'):
+                    Epson.set(type="B")
+                    print "<b>"
+                elif (c == 'b'):
+                    Epson.set(type="normal")
+                    print "</b>"
+                elif (c == 'U'):
+                    Epson.set(type="U")
+                    print "<u>"
+                elif (c == 'u'):
+                    Epson.set(type="normal")
+                    print "</u>"
+                elif (c == 'D'):
+                    Epson.set(width=2, height=2)
+                    print "<double>"
+                elif (c == 'd'):
+                    Epson.set(width=1, height=1)
+                    print "</double>"
+                elif (c == 'F'):
+                    Epson.control("FF")
+                    println
+                else:
+                    print "<Bad formatting code ["+c+" >"
+            #Epson.text(text) # print out the text
+            print text
 
-        print printResult.text
-        Epson.text(printResult.text)
         Epson.cut()
 
         ordersToConfirm.put(order) # if successful. if failed, add back to queue to print
@@ -142,15 +174,3 @@ else:
             print "bored"
 
 # sit back and relax while the workers work
-
-# do everything here
-# while True:
-#     # top priority confirm an order
-#     while not ordersToConfirm.empty():
-#         confirmOrder(ordersToConfirm, ordersToPrint)
-#         # second priority print an order
-#         while not ordersToPrint.empty():
-#             printOrder(ordersToPrint)
-#             # lowest priority poll for orders
-#     pollForUpdates(ordersToPrint)
-
