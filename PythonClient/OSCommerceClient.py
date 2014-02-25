@@ -23,7 +23,9 @@ securityCode = "1234"
 pollPage = "/arduino1.php" # poll for orders
 detailPage = "/arduino3.php" # get text of receipt to print
 setPage = "/arduino4.php" # set status of an order
-Epson = printer.Serial("/dev/tty0")
+# Set to the serial port for your printer
+#Epson = printer.Serial("/dev/tty0")
+Epson = printer.Serial("/dev/ttys0")
 
 havePrinter = False
 
@@ -64,30 +66,36 @@ def pollForUpdates(ordersToPrint, ordersToConfirm):
         payload = {'sc': securityCode};
         pollResult = requests.get(url, params=payload);
 
-        orders=pollResult.text.split(',');
+        textResult = pollResult.text;
 
-        for order in orders:
-            # strip out formatting
-            order = order.replace("[",""); # ignore starting [
-            order = order.replace("<br />",""); # ignore break between lines
-            order = order.replace("OK]",""); # ignore end OK]
+        if (len(textResult) < 1):
+            print "very short result ["+textResult+"]"
+        else:
 
-            logging.debug("processing order "+order);
-            vals = order.split();
-            if (len(vals) == 2):
-                orderNum = int(vals[0]);
-                status = int(vals[1]);
-                logging.debug("found order "+str(orderNum)+" status "+str(status)+",")
-                if (status == 1):
-                    print "queue order %i to print." % orderNum
-                    ordersToPrint.put(orderNum)
+            orders=textResult.split(',');
+
+            for order in orders:
+                # strip out formatting
+                order = order.replace("[",""); # ignore starting [
+                order = order.replace("<br />",""); # ignore break between lines
+                order = order.replace("OK]",""); # ignore end OK]
+
+                logging.debug("processing order "+order);
+                vals = order.split();
+                if (len(vals) == 2):
+                    orderNum = int(vals[0]);
+                    status = int(vals[1]);
+                    logging.debug("found order "+str(orderNum)+" status "+str(status)+",")
+                    if (status == 1):
+                        print "queue order %i to print." % orderNum
+                        ordersToPrint.put(orderNum)
+                    else:
+                        logging.debug("skip order "+str(orderNum));
                 else:
-                    logging.debug("skip order "+str(orderNum));
-            else:
-                if order=="OK]":
-                    logging.debug("OK at end of list");
-                #else:
-                    #logging.warn("Found bad order "+order);
+                    if order=="OK]":
+                        logging.debug("OK at end of list");
+                    #else:
+                        #logging.warn("Found bad order "+order);
 
         time.sleep(waitPollForOrders)
 
