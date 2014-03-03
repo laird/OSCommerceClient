@@ -118,6 +118,16 @@ def printOrders(ordersToPrint, ordersToConfirm):
         payload = {'sc': securityCode, "o": order};
         printResult = requests.get(url, params=payload);
         textResult = printResult.text
+        
+        # replace non-ASCII characters
+        
+        textResult = textResult.replace("Å","AA")
+        textResult = textResult.replace("Æ","AE")
+        textResult = textResult.replace("Ø","OE")
+        textResult = textResult.replace("å","aa")
+        textResult = textResult.replace("æ","ae")
+        textResult = textResult.replace("ø","oe")
+        
 	print textResult
         if (len(textResult) < 1):
             print "very short print result ["+textResult+"]"
