@@ -32,6 +32,7 @@ setPage = "/arduino4.php" # set status of an order
 havePrinter = True
 Epson = printer.Serial("/dev/ttyAMA0")
 
+Epson._raw('\x1B\x524') 
 Epson.text("hello world")
 Epson.cut()
 
@@ -127,7 +128,7 @@ def printOrders(ordersToPrint, ordersToConfirm):
 		print "block "+textBlock
 		if first: # don't try to parse control code from first text block because it doesn't have one
 		    print textBlock
-		    if len(textBlock)>1: Epson.text(textBlock)
+		    if len(textBlock)>1: Epson._raw(textBlock.encode('utf-8'))
 		    first = False
                 else: 
                     c = textBlock[0] # first character is formatting command
@@ -152,15 +153,15 @@ def printOrders(ordersToPrint, ordersToConfirm):
                         if havePrinter: Epson.set(width=1, height=1)
                         print "</double>"
                     elif (c == 'F'):
-                        if havePrinter: Epson.control("FF")
-			print ""
+                        if havePrinter: Epson._raw('\x0a')
+			print "feed"
                     else:
                         print "<Bad formatting code ["+c+" >"
 		    if len(text)<1:
 		        print "empty text"
 		    else:
 		        print text
-        	        if havePrinter: Epson.text(text) # print out the text
+        	        if havePrinter: Epson._raw(text.encode('utf-8')) # print out the text
 
         if havePrinter: Epson.cut()
 
