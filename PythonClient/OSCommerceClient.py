@@ -30,7 +30,10 @@ setPage = "/arduino4.php" # set status of an order
 #Epson = printer.Serial("/dev/ttys0")
 
 havePrinter = True
-Epson = printer.Serial("/dev/tty0")
+Epson = printer.Serial("/dev/ttyAMA0")
+
+Epson.text("hello world")
+Epson.cut()
 
 
 # Standard
