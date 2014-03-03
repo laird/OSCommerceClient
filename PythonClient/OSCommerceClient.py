@@ -121,12 +121,12 @@ def printOrders(ordersToPrint, ordersToConfirm):
         
         # replace non-ASCII characters
         
-        textResult = textResult.replace("Å","AA")
-        textResult = textResult.replace("Æ","AE")
-        textResult = textResult.replace("Ø","OE")
-        textResult = textResult.replace("å","aa")
-        textResult = textResult.replace("æ","ae")
-        textResult = textResult.replace("ø","oe")
+        textResult = textResult.replace(u"Å","AA")
+        textResult = textResult.replace(u"Æ","AE")
+        textResult = textResult.replace(u"Ø","OE")
+        textResult = textResult.replace(u"å","aa")
+        textResult = textResult.replace(u"æ","ae")
+        textResult = textResult.replace(u"ø","oe")
         
 	print textResult
         if (len(textResult) < 1):
