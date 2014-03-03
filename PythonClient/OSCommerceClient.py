@@ -8,6 +8,8 @@ __author__ = 'laird'
 #
 # uses requests from http://docs.python-requests.org/en/latest/user/install/#distribute-pip
 
+# coding: utf8
+
 import logging
 import requests
 import Queue
