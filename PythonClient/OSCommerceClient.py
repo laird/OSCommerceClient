@@ -35,7 +35,6 @@ Epson = printer.Serial("/dev/ttyAMA0")
 Epson.text("hello world")
 Epson.cut()
 
-
 # Standard
 
 waitPollForOrders = 30 # wait 30 seconds between polls
@@ -118,16 +117,22 @@ def printOrders(ordersToPrint, ordersToConfirm):
         payload = {'sc': securityCode, "o": order};
         printResult = requests.get(url, params=payload);
         textResult = printResult.text
+	print textResult
         if (len(textResult) < 1):
             print "very short print result ["+textResult+"]"
         else:
             textBlocks = printResult.text.split("[")
             first=True
-            for textBlock in textBlocks[1:]: # skip first text block
-                c = textBlock[0] # first character is formatting command
-                text = textBlock[1:]
-                if not first: # don't try to parse control code from first text block because it doesn't have one
-                    first = False
+            for textBlock in textBlocks:
+		print "block "+textBlock
+		if first: # don't try to parse control code from first text block because it doesn't have one
+		    print textBlock
+		    if len(textBlock)>1: Epson.text(textBlock)
+		    first = False
+                else: 
+                    c = textBlock[0] # first character is formatting command
+                    text = textBlock[1:]
+		    print "control "+c+" text "+text
                     if (c == 'B'):
                         if havePrinter: Epson.set(type="B")
                         print "<b>"
@@ -148,11 +153,14 @@ def printOrders(ordersToPrint, ordersToConfirm):
                         print "</double>"
                     elif (c == 'F'):
                         if havePrinter: Epson.control("FF")
-                        println
+			print ""
                     else:
                         print "<Bad formatting code ["+c+" >"
-                if havePrinter: Epson.text(text) # print out the text
-                print text
+		    if len(text)<1:
+		        print "empty text"
+		    else:
+		        print text
+        	        if havePrinter: Epson.text(text) # print out the text
 
         if havePrinter: Epson.cut()
 
