@@ -114,38 +114,42 @@ def printOrders(ordersToPrint, ordersToConfirm):
         url = "http://"+server+detailPage;
         payload = {'sc': securityCode, "o": order};
         printResult = requests.get(url, params=payload);
-        textBlocks = printResult.text.split("[")
-        first=True
-        for textBlock in textBlocks[1:]: # skip first text block
-            c = textBlock[0] # first character is formatting command
-            text = textBlock[1:]
-            if not first: # don't try to parse control code from first text block because it doesn't have one
-                first = False
-                if (c == 'B'):
-                    if havePrinter: Epson.set(type="B")
-                    print "<b>"
-                elif (c == 'b'):
-                    if havePrinter: Epson.set(type="normal")
-                    print "</b>"
-                elif (c == 'U'):
-                    if havePrinter: Epson.set(type="U")
-                    print "<u>"
-                elif (c == 'u'):
-                    if havePrinter: Epson.set(type="normal")
-                    print "</u>"
-                elif (c == 'D'):
-                    if havePrinter: Epson.set(width=2, height=2)
-                    print "<double>"
-                elif (c == 'd'):
-                    if havePrinter: Epson.set(width=1, height=1)
-                    print "</double>"
-                elif (c == 'F'):
-                    if havePrinter: Epson.control("FF")
-                    println
-                else:
-                    print "<Bad formatting code ["+c+" >"
-            if havePrinter: Epson.text(text) # print out the text
-            print text
+        textResult = printResult.text
+        if (len(textResult) < 1):
+            print "very short print result ["+textResult+"]"
+        else:
+            textBlocks = printResult.text.split("[")
+            first=True
+            for textBlock in textBlocks[1:]: # skip first text block
+                c = textBlock[0] # first character is formatting command
+                text = textBlock[1:]
+                if not first: # don't try to parse control code from first text block because it doesn't have one
+                    first = False
+                    if (c == 'B'):
+                        if havePrinter: Epson.set(type="B")
+                        print "<b>"
+                    elif (c == 'b'):
+                        if havePrinter: Epson.set(type="normal")
+                        print "</b>"
+                    elif (c == 'U'):
+                        if havePrinter: Epson.set(type="U")
+                        print "<u>"
+                    elif (c == 'u'):
+                        if havePrinter: Epson.set(type="normal")
+                        print "</u>"
+                    elif (c == 'D'):
+                        if havePrinter: Epson.set(width=2, height=2)
+                        print "<double>"
+                    elif (c == 'd'):
+                        if havePrinter: Epson.set(width=1, height=1)
+                        print "</double>"
+                    elif (c == 'F'):
+                        if havePrinter: Epson.control("FF")
+                        println
+                    else:
+                        print "<Bad formatting code ["+c+" >"
+                if havePrinter: Epson.text(text) # print out the text
+                print text
 
         if havePrinter: Epson.cut()
 
