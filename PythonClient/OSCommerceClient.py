@@ -119,6 +119,7 @@ def printOrders(ordersToPrint, ordersToConfirm):
         url = "http://"+server+detailPage;
         payload = {'sc': securityCode, "o": order};
         printResult = requests.get(url, params=payload);
+        printResult.encoding = 'ISO-8859-1'
         textResult = printResult.text
         
         # replace non-ASCII characters
