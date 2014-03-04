@@ -34,7 +34,7 @@ setPage = "/arduino4.php" # set status of an order
 havePrinter = True
 Epson = printer.Serial("/dev/ttyAMA0")
 
-Epson._raw('\x1B\x524') 
+Epson._raw('\x1b\x744')
 Epson.text("hello world")
 Epson.cut()
 
