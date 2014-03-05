@@ -128,16 +128,16 @@ def printOrders(ordersToPrint, ordersToConfirm):
         printResult = requests.get(url, params=payload);
         printResult.encoding = 'ISO-8859-1'
         textResult = printResult.text
-        
+
         # replace non-ASCII characters
-        
+
         textResult = textResult.replace(u"Å","AA")
         textResult = textResult.replace(u"Æ","AE")
         textResult = textResult.replace(u"Ø","OE")
         textResult = textResult.replace(u"å","aa")
         textResult = textResult.replace(u"æ","ae")
         textResult = textResult.replace(u"ø","oe")
-        
+
 	#print textResult
         if (len(textResult) > 0):
             textBlocks = printResult.text.split("[")
@@ -148,7 +148,7 @@ def printOrders(ordersToPrint, ordersToConfirm):
 		    print textBlock
 		    if len(textBlock)>1: Epson._raw(textBlock.encode('utf-8'))
 		    first = False
-                else: 
+                else:
                     c = textBlock[0] # first character is formatting command
                     text = textBlock[1:]
 		    #print "control "+c+" text "+text
@@ -172,17 +172,17 @@ def printOrders(ordersToPrint, ordersToConfirm):
                         #print "</double>"
                     elif (c == 'F'):
                         if havePrinter: Epson._raw('\x0a')
-			#print "feed"
-                    else:
+                        #print "feed"
+                    #else:
                         #print "<Bad formatting code ["+c+" >"
 		    if len(text)>0:
 		        #print text
         	        if havePrinter: Epson._raw(text.encode('utf-8')) # print out the text
 
         if havePrinter: Epson.cut()
-        
+
         # and sound buzzer
-        
+
         GPIO.output(buzzer, GPIO.HIGH)
         time.sleep(buzzerTime)
         GPIO.output(buzzer, GPIO.LOW)
