@@ -17,6 +17,7 @@ from threading import Thread
 import time
 import argparse
 from escpos import *
+import RPi.GPIO as GPIO
 
 # configuration
 
@@ -34,14 +35,21 @@ setPage = "/arduino4.php" # set status of an order
 havePrinter = True
 Epson = printer.Serial("/dev/ttyAMA0")
 
-Epson._raw('\x1b\x744')
-Epson.text("hello world")
-Epson.cut()
+#Epson._raw('\x1b\x744')
+#Epson.text("hello world")
+#Epson.cut()
+
+# Buzzer on GPIO 22 = pin 15
+
+buzzer = 15
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(buzzer, GPIO.OUT, initial=GPIO.LOW)
 
 # Standard
 
 waitPollForOrders = 30 # wait 30 seconds between polls
 maxNumToPrint = 5
+buzzerTime = 1 # buzz for one second
 
 # parse command line arguments
 
@@ -177,6 +185,12 @@ def printOrders(ordersToPrint, ordersToConfirm):
         	        if havePrinter: Epson._raw(text.encode('utf-8')) # print out the text
 
         if havePrinter: Epson.cut()
+        
+        # and sound buzzer
+        
+        GPIO.output(buzzer, GPIO.HIGH)
+        time.sleep(buzzerTime)
+        GPIO.output(buzzer, GPIO.LOW)
 
         ordersToConfirm.put(order) # if successful. if failed, add back to queue to print
         ordersToPrint.task_done()
