@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# coding: utf8
 
 __author__ = 'laird'
 #
@@ -7,8 +8,6 @@ __author__ = 'laird'
 # Polls an OSCommerce site and pulls down a list of pending orders, prints them, and sets their status to 'processing'
 #
 # uses requests from http://docs.python-requests.org/en/latest/user/install/#distribute-pip
-
-# coding: utf8
 
 import logging
 import requests
@@ -140,9 +139,7 @@ def printOrders(ordersToPrint, ordersToConfirm):
         textResult = textResult.replace(u"ø","oe")
         
 	#print textResult
-        if (len(textResult) < 1):
-            #print "very short print result ["+textResult+"]"
-        else:
+        if (len(textResult) > 0):
             textBlocks = printResult.text.split("[")
             first=True
             for textBlock in textBlocks:
@@ -178,9 +175,7 @@ def printOrders(ordersToPrint, ordersToConfirm):
 			#print "feed"
                     else:
                         #print "<Bad formatting code ["+c+" >"
-		    if len(text)<1:
-		        #print "empty text"
-		    else:
+		    if len(text)>0:
 		        #print text
         	        if havePrinter: Epson._raw(text.encode('utf-8')) # print out the text
 
