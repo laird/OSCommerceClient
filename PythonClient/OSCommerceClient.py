@@ -84,9 +84,7 @@ def pollForUpdates(ordersToPrint, ordersToConfirm):
 
         textResult = pollResult.text;
 
-        if (len(textResult) < 1):
-            # print "very short result ["+textResult+"]"
-        else:
+        if (len(textResult) > 0):
 
             orders=textResult.split(',');
 
