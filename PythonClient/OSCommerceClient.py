@@ -26,6 +26,8 @@ pollPage = "/arduino1.php" # poll for orders
 detailPage = "/arduino3.php" # get text of receipt to print
 setPage = "/arduino4.php" # set status of an order
 
+testMode = 1 # set to 1 to suppress setting order status (so can retest the same order)
+
 # Set to the serial port for your printer
 
 #havePrinter = False
@@ -34,7 +36,8 @@ setPage = "/arduino4.php" # set status of an order
 havePrinter = True
 Epson = printer.Serial("/dev/ttyAMA0")
 
-#Epson._raw('\x1b\x744')
+Epson._raw('\x1b\x52\x04') # Set to Danish 1 character set
+
 #Epson.text("hello world")
 #Epson.cut()
 
@@ -190,14 +193,20 @@ def printOrders(ordersToPrint, ordersToConfirm):
 
 def confirmOrders(ordersToPrint, ordersToConfirm):
     "worker thread to send confirmation message"
-    print "starting confirm worker"
+    if (testMode):
+        print "starting confirm worker in test mode"
+    else:
+        print "starting confirm worker"
+
     while True:
         order = ordersToConfirm.get()
-        print "confirming order "+str(order)+"."
 
-        url = "http://"+server+setPage;
-        payload = {'sc': securityCode, "o": order, "s":"processing"};
-        printResult = requests.get(url, params=payload);
+        if (not testMode):
+            print "confirming order "+str(order)+"."
+            url = "http://"+server+setPage;
+            payload = {'sc': securityCode, "o": order, "s":"processing"};
+            printResult = requests.get(url, params=payload);
+
         ordersToConfirm.task_done()
 
 if args.reset:
