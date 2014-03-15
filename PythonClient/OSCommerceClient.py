@@ -178,7 +178,7 @@ def printOrders(ordersToPrint, ordersToConfirm):
                         #print "<Bad formatting code ["+c+" >"
 		    if len(text)>0:
 		        #print text
-        	        if havePrinter: Epson._raw(text.encode('utf-8')) # print out the text
+        	        if havePrinter: Epson._raw(text) # print out the text
 
         if havePrinter: Epson.cut()
 
