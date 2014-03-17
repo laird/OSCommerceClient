@@ -23,9 +23,9 @@ define('ID_ORDER_PROCESSING', '2');//the order is busy
 define('ID_ORDER_FINISHED', '3');//the order is finished
 define('SECURITY_CODE', '1049a765e9c01a01086791fa553644e6');// sample: 1049a765e9c01a01086791fa553644e6 for 1234
 define('SALT', '_1BHDC3_');//extra security on the md5
-define('NOTIFY_CUSTOMER_ARDUINO', false);//send an e-mail to the customer upon status change?
-define('NOTIFY_CUSTOMER_COMMENT', 'Automated update');//the comment that will be stored in order_status_history and sent in the mail
-define('PATH_TO_ADMIN_LANG_ORDERS','C:/wamp/www/butikejer/includes/languages/' . $language . '/orders.php');//needed for e-mail contents
+define('NOTIFY_CUSTOMER_ARDUINO', false;//send an e-mail to the customer upon status change?
+define('NOTIFY_CUSTOMER_COMMENT', 'Bestillingen er modtaget og skrevet ud, vi starter hurtigst muligt');//the comment that will be stored in order_status_history and sent in the mail
+define('PATH_TO_ADMIN_LANG_ORDERS','***/includes/languages/' . $language . '/orders.php');//needed for e-mail contents, replace *** with path to admin folder
 
 //get the language definitions
 require(PATH_TO_ADMIN_LANG_ORDERS);
