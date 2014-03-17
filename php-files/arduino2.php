@@ -31,11 +31,8 @@ if(isset($_GET['sc'])){
 require('includes/application_top.php'); //
                   
 //fetch order(s)
-$sql = sprintf("SELECT orders_id, orders_status FROM orders WHERE orders_status='%s' ORDER BY orders_id ", ID_ORDER_WAITING); //add before last " to limit to one line:  LIMIT 0, 1
+$sql = sprintf("SELECT orders_id, orders_status FROM orders WHERE orders_status='%s' ORDER BY orders_id  ", ID_ORDER_WAITING); //add before last " to limit to one line:  LIMIT 0, 1
 $result = tep_db_query($sql);
-
-
-
 echo "[";
 while($row = tep_db_fetch_array($result)){
   echo $row['orders_id'] . " " . $row['orders_status'] . "," ;
