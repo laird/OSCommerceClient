@@ -67,6 +67,13 @@ group.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help=
 group.add_argument('-r','--reset', action='store_true', help='reset orders to pending')
 group.add_argument('-c','--copies', metavar='copies', type=int, default=1, help='print this many copies of each receipt')
 group.add_argument('-t','--test', metavar='store_true', type=int, default=0, help='set test mode to 1 to leave orders in unchanged state')
+group.add_argument('-i','--printer', metavar='havePrinter', type=int, default=1, help='set to 1 if you have a printer, 0 if not')
+group.add_argument('-s','--server', metavar='server', type=str, default="87.51.52.114" help='address of server')
+group.add_argument('-e','--securityCode', metavar='securityCode', type=str, default="1234", help='security code for server')
+group.add_argument('-q','--pollPage', metavar='pollPage', type=str, default="/arduino1.php", help='page to poll for orders')
+group.add_argument('-d','--detailPage', metavar='detailPage', type=str, default="/arduino3.php", help='page to retrieve order details')
+group.add_argument('-a','--setPage', metavar='setPage', type=str, default"/arduino4.php", help='page to set status')
+
 args = parser.parse_args()
 
 if args.poll: waitPollForOrders=args.poll
