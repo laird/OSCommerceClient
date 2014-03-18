@@ -8,6 +8,11 @@ __author__ = 'laird'
 # Polls an OSCommerce site and pulls down a list of pending orders, prints them, and sets their status to 'processing'
 #
 # uses requests from http://docs.python-requests.org/en/latest/user/install/#distribute-pip
+#
+# Todo:
+# - Implement [E [e [A [a [O [o codes for Danish characters
+# - remove extended character substitution
+# - Print receipts printCopies times (as a command line parameter)
 
 import logging
 import requests
@@ -50,6 +55,7 @@ GPIO.setup(buzzer, GPIO.OUT, initial=GPIO.LOW)
 # Standard
 
 waitPollForOrders = 30 # wait 30 seconds between polls
+printCopies = 1 # number of copies of receipt to print
 maxNumToPrint = 5
 buzzerTime = 1 # buzz for one second
 
@@ -59,9 +65,11 @@ parser = argparse.ArgumentParser(description='This is the OSCommerce client by l
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help='poll for new orders')
 group.add_argument('-r','--reset', action='store_true', help='reset orders to pending')
+group.add_argument('-c','--copies', metavar='copies', type=int, default=1, help='print this many copies of each receipt')
 args = parser.parse_args()
 
 if args.poll: waitPollForOrders=args.poll
+if args.copies: printCopies = args.copies
 
 # setup
 
