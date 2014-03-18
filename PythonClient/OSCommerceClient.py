@@ -66,6 +66,7 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help='poll for new orders')
 group.add_argument('-r','--reset', action='store_true', help='reset orders to pending')
 group.add_argument('-c','--copies', metavar='copies', type=int, default=1, help='print this many copies of each receipt')
+group.add_argument('-t','--test', metavar='store_true', type=int, default=0, help='set test mode to 1 to leave orders in unchanged state')
 args = parser.parse_args()
 
 if args.poll: waitPollForOrders=args.poll
