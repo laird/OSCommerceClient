@@ -21,8 +21,12 @@ from threading import Thread
 import time
 import argparse
 from escpos import *
-import RPi.GPIO as GPIO
-
+try
+    import RPi.GPIO as GPIO
+except ImportError:
+    print "error importing GPIO. No access to printer for you!"
+    havePrinter = False;
+	
 # configuration
 
 server = "87.51.52.114"
