@@ -10,7 +10,6 @@ __author__ = 'laird'
 # uses requests from http://docs.python-requests.org/en/latest/user/install/#distribute-pip
 #
 # Todo:
-# - Implement [E [e [A [a [O [o codes for Danish characters
 # - remove extended character substitution
 
 import logging
