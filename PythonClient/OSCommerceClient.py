@@ -21,12 +21,13 @@ from threading import Thread
 import time
 import argparse
 from escpos import *
-try
+
+try:
     import RPi.GPIO as GPIO
 except ImportError:
     print "error importing GPIO. No access to printer for you!"
     havePrinter = False;
-	
+
 # configuration
 
 server = "87.51.52.114"
@@ -47,8 +48,9 @@ Epson = printer.Serial("/dev/ttyAMA0")
 
 Epson._raw('\x1b\x52\x04') # Set to Danish 1 character set
 
+Epson.raw('Test: \x7B\x7C\x7D\x5B\x5C\x5D')
 #Epson.text("hello world")
-#Epson.cut()
+Epson.cut()
 
 # Buzzer on GPIO 22 = pin 15
 
@@ -72,11 +74,12 @@ group.add_argument('-r','--reset', action='store_true', help='reset orders to pe
 group.add_argument('-c','--copies', metavar='copies', type=int, default=1, help='print this many copies of each receipt')
 group.add_argument('-t','--test', metavar='store_true', type=int, default=0, help='set test mode to 1 to leave orders in unchanged state')
 group.add_argument('-i','--printer', metavar='havePrinter', type=int, default=1, help='set to 1 if you have a printer, 0 if not')
-group.add_argument('-s','--server', metavar='server', type=str, default="87.51.52.114" help='address of server')
+group.add_argument('-s','--server', metavar='server', type=str, default="87.51.52.114", help='address of server')
 group.add_argument('-e','--securityCode', metavar='securityCode', type=str, default="1234", help='security code for server')
 group.add_argument('-q','--pollPage', metavar='pollPage', type=str, default="/arduino1.php", help='page to poll for orders')
 group.add_argument('-d','--detailPage', metavar='detailPage', type=str, default="/arduino3.php", help='page to retrieve order details')
-group.add_argument('-a','--setPage', metavar='setPage', type=str, default"/arduino4.php", help='page to set status')
+group.add_argument('-a','--setPage', metavar='setPage', type=str, default="/arduino4.php", help='page to set status')
+# note: Running with -h or --help prints the above info
 
 args = parser.parse_args()
 
@@ -193,9 +196,21 @@ def printOrders(ordersToPrint, ordersToConfirm):
                         #print "</double>"
                     elif (c == 'F'):
                         if havePrinter: Epson._raw('\x0a')
-                        #print "feed"
-                    #else:
-                        #print "<Bad formatting code ["+c+" >"
+                        #print "Feed"
+                    elif (c == 'E'):
+                        if havePrinter: Epson._raw('\x5D')
+                    elif (c == 'e'):
+                        if havePrinter: Epson._raw('\x7D')
+                    elif (c == 'O'):
+                        if havePrinter: Epson._raw('\x5C')
+                    elif (c == 'o'):
+                        if havePrinter: Epson._raw('\x7C')
+                    elif (c == 'A'):
+                        if havePrinter: Epson._raw('\x5B')
+                    elif (c == 'a'):
+                        if havePrinter: Epson._raw('\x7B')
+                    else:
+                        print "<Bad formatting code ["+c+" >"
 		    if len(text)>0:
 		        #print text
         	        if havePrinter: Epson._raw(text) # print out the text
