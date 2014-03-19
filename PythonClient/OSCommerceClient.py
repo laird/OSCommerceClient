@@ -48,7 +48,7 @@ Epson = printer.Serial("/dev/ttyAMA0")
 
 Epson._raw('\x1b\x52\x04') # Set to Danish 1 character set
 
-Epson.raw('Test: \x7B\x7C\x7D\x5B\x5C\x5D')
+Epson._raw('Test: \x7B\x7C\x7D\x5B\x5C\x5D')
 #Epson.text("hello world")
 Epson.cut()
 
