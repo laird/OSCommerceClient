@@ -12,7 +12,6 @@ __author__ = 'laird'
 # Todo:
 # - Implement [E [e [A [a [O [o codes for Danish characters
 # - remove extended character substitution
-# - Print receipts printCopies times (as a command line parameter)
 
 import logging
 import requests
