@@ -33,7 +33,7 @@ securityCode = "1234" # Example security code
 pollPage = "/arduino1.php" # poll for orders
 detailPage = "/arduino3.php" # get text of receipt to print
 setPage = "/arduino4.php" # set status of an order. arduino4 notify the custome, arduino5 does not
-
+copies = 1 # number of copies, usefull to check if driver returns correct amount of cash
 testMode = 1 # set to 1 to suppress setting order status (so can retest the same order)
 
 # Set to the serial port for your printer
