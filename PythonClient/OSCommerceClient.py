@@ -151,71 +151,78 @@ def printOrders(ordersToPrint, ordersToConfirm):
         payload = {'sc': securityCode, "o": order};
         printResult = requests.get(url, params=payload);
         printResult.encoding = 'ISO-8859-1'
-        textResult = printResult.text
 
-        # replace non-ASCII characters
+        for copy in range(copies):
 
-        textResult = textResult.replace(u"Å","AA")
-        textResult = textResult.replace(u"Æ","AE")
-        textResult = textResult.replace(u"Ø","OE")
-        textResult = textResult.replace(u"å","aa")
-        textResult = textResult.replace(u"æ","ae")
-        textResult = textResult.replace(u"ø","oe")
+            textResult = printResult.text
 
-	#print textResult
-        if (len(textResult) > 0):
-            textBlocks = printResult.text.split("[")
-            first=True
-            for textBlock in textBlocks:
-		#print "block "+textBlock
-		if first: # don't try to parse control code from first text block because it doesn't have one
-		    print textBlock
-		    if len(textBlock)>1: Epson._raw(textBlock.encode('utf-8'))
-		    first = False
-                else:
-                    c = textBlock[0] # first character is formatting command
-                    text = textBlock[1:]
-		    #print "control "+c+" text "+text
-                    if (c == 'B'):
-                        if havePrinter: Epson.set(type="B")
-                        #print "<b>"
-                    elif (c == 'b'):
-                        if havePrinter: Epson.set(type="normal")
-                        #print "</b>"
-                    elif (c == 'U'):
-                        if havePrinter: Epson.set(type="U")
-                        #print "<u>"
-                    elif (c == 'u'):
-                        if havePrinter: Epson.set(type="normal")
-                        #print "</u>"
-                    elif (c == 'D'):
-                        if havePrinter: Epson.set(width=2, height=2)
-                        #print "<double>"
-                    elif (c == 'd'):
-                        if havePrinter: Epson.set(width=1, height=1)
-                        #print "</double>"
-                    elif (c == 'F'):
-                        if havePrinter: Epson._raw('\x0a')
-                        #print "Feed"
-                    elif (c == 'E'):
-                        if havePrinter: Epson._raw('\x5D')
-                    elif (c == 'e'):
-                        if havePrinter: Epson._raw('\x7D')
-                    elif (c == 'O'):
-                        if havePrinter: Epson._raw('\x5C')
-                    elif (c == 'o'):
-                        if havePrinter: Epson._raw('\x7C')
-                    elif (c == 'A'):
-                        if havePrinter: Epson._raw('\x5B')
-                    elif (c == 'a'):
-                        if havePrinter: Epson._raw('\x7B')
+            # replace non-ASCII characters
+
+            textResult = textResult.replace(u"Å","AA")
+            textResult = textResult.replace(u"Æ","AE")
+            textResult = textResult.replace(u"Ø","OE")
+            textResult = textResult.replace(u"å","aa")
+            textResult = textResult.replace(u"æ","ae")
+            textResult = textResult.replace(u"ø","oe")
+
+            #print textResult
+
+            if (len(textResult) > 0):
+                textBlocks = printResult.text.split("[")
+                first=True
+
+                for textBlock in textBlocks:
+                    #print "block "+textBlock
+
+                    if first: # don't try to parse control code from first text block because it doesn't have one
+                        print textBlock
+                        if len(textBlock)>1: Epson._raw(textBlock.encode('utf-8')) # printer hates null strings
+                        first = False
                     else:
-                        print "<Bad formatting code ["+c+" >"
-		    if len(text)>0:
-		        #print text
-        	        if havePrinter: Epson._raw(text) # print out the text
+                        c = textBlock[0] # first character is formatting command
+                        text = textBlock[1:]
+                        #print "control "+c+" text "+text
+                        if (c == 'B'):
+                            if havePrinter: Epson.set(type="B")
+                            #print "<b>"
+                        elif (c == 'b'):
+                            if havePrinter: Epson.set(type="normal")
+                            #print "</b>"
+                        elif (c == 'U'):
+                            if havePrinter: Epson.set(type="U")
+                            #print "<u>"
+                        elif (c == 'u'):
+                            if havePrinter: Epson.set(type="normal")
+                            #print "</u>"
+                        elif (c == 'D'):
+                            if havePrinter: Epson.set(width=2, height=2)
+                            #print "<double>"
+                        elif (c == 'd'):
+                            if havePrinter: Epson.set(width=1, height=1)
+                            #print "</double>"
+                        elif (c == 'F'):
+                            if havePrinter: Epson._raw('\x0a')
+                            #print "Feed"
+                        elif (c == 'E'):
+                            if havePrinter: Epson._raw('\x5D')
+                        elif (c == 'e'):
+                            if havePrinter: Epson._raw('\x7D')
+                        elif (c == 'O'):
+                            if havePrinter: Epson._raw('\x5C')
+                        elif (c == 'o'):
+                            if havePrinter: Epson._raw('\x7C')
+                        elif (c == 'A'):
+                            if havePrinter: Epson._raw('\x5B')
+                        elif (c == 'a'):
+                            if havePrinter: Epson._raw('\x7B')
+                        else:
+                            print "<Bad formatting code ["+c+" >"
 
-        if havePrinter: Epson.cut()
+                        if len(text)>0:
+                            if havePrinter: Epson._raw(text) # print out the text
+
+            if havePrinter: Epson.cut()
+            # repeat above for each copy
 
         # and sound buzzer
 
