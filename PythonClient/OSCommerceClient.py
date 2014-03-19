@@ -30,27 +30,20 @@ except ImportError:
 
 # configuration
 
-server = "87.51.52.114"
-securityCode = "1234"
+server = "87.51.52.114" # Old ip of test server, replace with your own
+securityCode = "1234" # Example security code
 pollPage = "/arduino1.php" # poll for orders
 detailPage = "/arduino3.php" # get text of receipt to print
-setPage = "/arduino4.php" # set status of an order
+setPage = "/arduino4.php" # set status of an order. arduino4 notify the custome, arduino5 does not
 
 testMode = 1 # set to 1 to suppress setting order status (so can retest the same order)
 
 # Set to the serial port for your printer
 
-#havePrinter = False
-#Epson = printer.Serial("/dev/ttys0")
-
 havePrinter = True
 Epson = printer.Serial("/dev/ttyAMA0")
 
-Epson._raw('\x1b\x52\x04') # Set to Danish 1 character set
-
-Epson._raw('Test: \x7B\x7C\x7D\x5B\x5C\x5D')
-#Epson.text("hello world")
-Epson.cut()
+Epson._raw('\x1b\x52\x04') # Set to Danish 1 character set, comment out for english.
 
 # Buzzer on GPIO 22 = pin 15
 
@@ -61,7 +54,7 @@ GPIO.setup(buzzer, GPIO.OUT, initial=GPIO.LOW)
 # Standard
 
 waitPollForOrders = 30 # wait 30 seconds between polls
-printCopies = 1 # number of copies of receipt to print
+printCopies = 1 # number of copies of receipt to print, uefull to check if driver returns the right amount of cash.
 maxNumToPrint = 5
 buzzerTime = 1 # buzz for one second
 
