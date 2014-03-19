@@ -196,17 +196,17 @@ def printOrders(ordersToPrint, ordersToConfirm):
                             if havePrinter: Epson._raw('\x0a')
                             #print "Feed"
                         elif (c == 'E'):
-                            if havePrinter: Epson._raw('\x5D')
+                            if havePrinter: Epson._raw('\x5B')
                         elif (c == 'e'):
-                            if havePrinter: Epson._raw('\x7D')
+                            if havePrinter: Epson._raw('\x7B')
                         elif (c == 'O'):
                             if havePrinter: Epson._raw('\x5C')
                         elif (c == 'o'):
                             if havePrinter: Epson._raw('\x7C')
                         elif (c == 'A'):
-                            if havePrinter: Epson._raw('\x5B')
+                            if havePrinter: Epson._raw('\x5D')
                         elif (c == 'a'):
-                            if havePrinter: Epson._raw('\x7B')
+                            if havePrinter: Epson._raw('\x7D')
                         else:
                             print "<Bad formatting code ["+c+" >"
 
