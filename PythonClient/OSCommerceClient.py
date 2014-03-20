@@ -59,23 +59,23 @@ buzzerTime = 1 # buzz for one second
 # parse command line arguments
 
 parser = argparse.ArgumentParser(description='This is the OSCommerce client by laird.', epilog="set either poll or reset, not both.")
-group = parser.add_mutually_exclusive_group()
-group.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help='poll for new orders')
-group.add_argument('-r','--reset', action='store_true', help='reset orders to pending')
-group.add_argument('-c','--copies', metavar='copies', type=int, default=1, help='print this many copies of each receipt')
-group.add_argument('-t','--test', metavar='store_true', type=int, default=0, help='set test mode to 1 to leave orders in unchanged state')
-group.add_argument('-i','--printer', metavar='havePrinter', type=int, default=1, help='set to 1 if you have a printer, 0 if not')
-group.add_argument('-s','--server', metavar='server', type=str, default="87.51.52.114", help='address of server')
-group.add_argument('-e','--securityCode', metavar='securityCode', type=str, default="1234", help='security code for server')
-group.add_argument('-q','--pollPage', metavar='pollPage', type=str, default="/arduino1.php", help='page to poll for orders')
-group.add_argument('-d','--detailPage', metavar='detailPage', type=str, default="/arduino3.php", help='page to retrieve order details')
-group.add_argument('-a','--setPage', metavar='setPage', type=str, default="/arduino4.php", help='page to set status')
+# group = parser.add_mutually_exclusive_group()
+parser.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help='poll for new orders')
+parser.add_argument('-r','--reset', action='store_true', help='reset orders to pending')
+parser.add_argument('-c','--copies', metavar='printCopies', type=int, default=1, help='print this many copies of each receipt')
+parser.add_argument('-t','--test', metavar='store_true', type=int, default=0, help='set test mode to 1 to leave orders in unchanged state')
+parser.add_argument('-i','--printer', metavar='havePrinter', type=int, default=1, help='set to 1 if you have a printer, 0 if not')
+parser.add_argument('-s','--server', metavar='server', type=str, default="87.51.52.114", help='address of server')
+parser.add_argument('-e','--securityCode', metavar='securityCode', type=str, default="1234", help='security code for server')
+parser.add_argument('-q','--pollPage', metavar='pollPage', type=str, default="/arduino1.php", help='page to poll for orders')
+parser.add_argument('-d','--detailPage', metavar='detailPage', type=str, default="/arduino3.php", help='page to retrieve order details')
+parser.add_argument('-a','--setPage', metavar='setPage', type=str, default="/arduino4.php", help='page to set status')
 # note: Running with -h or --help prints the above info
 
 args = parser.parse_args()
 
 if args.poll: waitPollForOrders=args.poll
-if args.copies: printCopies = args.copies
+if args.printCopies: printCopies = args.printCopies
 
 # setup
 
@@ -143,7 +143,8 @@ def printOrders(ordersToPrint, ordersToConfirm):
         printResult = requests.get(url, params=payload);
         printResult.encoding = 'ISO-8859-1'
 
-        for copy in range(copies):
+        for copy in range(printCopies):
+            print "Print copy "+copy
 
             textResult = printResult.text
 
@@ -194,17 +195,17 @@ def printOrders(ordersToPrint, ordersToConfirm):
                         elif (c == 'F'):
                             if havePrinter: Epson._raw('\x0a')
                             #print "Feed"
-                        elif (c == 'E'):
+                        elif (c == 'A'):
                             if havePrinter: Epson._raw('\x5B')
-                        elif (c == 'e'):
+                        elif (c == 'a'):
                             if havePrinter: Epson._raw('\x7B')
                         elif (c == 'O'):
                             if havePrinter: Epson._raw('\x5C')
                         elif (c == 'o'):
                             if havePrinter: Epson._raw('\x7C')
-                        elif (c == 'A'):
+                        elif (c == 'E'):
                             if havePrinter: Epson._raw('\x5D')
-                        elif (c == 'a'):
+                        elif (c == 'e'):
                             if havePrinter: Epson._raw('\x7D')
                         else:
                             print "<Bad formatting code ["+c+" >"
