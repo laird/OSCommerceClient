@@ -26,28 +26,29 @@ except ImportError:
     print "error importing GPIO. No access to printer for you!"
     havePrinter = False;
 
-# configuration
+# configuration (command line args are preferable, see argparse below)
 
 server = "87.51.52.114" # Old ip of test server, replace with your own
 securityCode = "1234" # Example security code
 pollPage = "/arduino1.php" # poll for orders
 detailPage = "/arduino3.php" # get text of receipt to print
 setPage = "/arduino4.php" # set status of an order. arduino4 notify the custome, arduino5 does not
-copies = 1 # number of copies, usefull to check if driver returns correct amount of cash
-testMode = 1 # set to 1 to suppress setting order status (so can retest the same order)
+printCopies = 1 # number of copies, usefull to check if driver returns correct amount of cash
+testMode = 0 # set to 1 to suppress setting order status (so can retest the same order)
 
 # Set to the serial port for your printer
 
 havePrinter = True
-Epson = printer.Serial("/dev/ttyAMA0")
-
-Epson._raw('\x1b\x52\x04') # Set to Danish 1 character set, comment out for english.
+serialPort = "/dev/ttyAMA0" # for GPIO
+#serialPort = "/dev/ttys001" # for USB port on Mac (may vary)
 
 # Buzzer on GPIO 22 = pin 15
-
-buzzer = 15
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(buzzer, GPIO.OUT, initial=GPIO.LOW)
+try:
+    buzzer = 15
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(buzzer, GPIO.OUT, initial=GPIO.LOW)
+except NameError:
+    print "No GPIO means no buzzer"
 
 # Standard
 
@@ -61,31 +62,82 @@ buzzerTime = 1 # buzz for one second
 parser = argparse.ArgumentParser(description='This is the OSCommerce client by laird.', epilog="set either poll or reset, not both.")
 # group = parser.add_mutually_exclusive_group()
 parser.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help='poll for new orders')
-parser.add_argument('-r','--reset', action='store_true', help='reset orders to pending')
-parser.add_argument('-c','--copies', metavar='printCopies', type=int, default=1, help='print this many copies of each receipt')
-parser.add_argument('-t','--test', metavar='store_true', type=int, default=0, help='set test mode to 1 to leave orders in unchanged state')
-parser.add_argument('-i','--printer', metavar='havePrinter', type=int, default=1, help='set to 1 if you have a printer, 0 if not')
-parser.add_argument('-s','--server', metavar='server', type=str, default="87.51.52.114", help='address of server')
-parser.add_argument('-e','--securityCode', metavar='securityCode', type=str, default="1234", help='security code for server')
-parser.add_argument('-q','--pollPage', metavar='pollPage', type=str, default="/arduino1.php", help='page to poll for orders')
-parser.add_argument('-d','--detailPage', metavar='detailPage', type=str, default="/arduino3.php", help='page to retrieve order details')
-parser.add_argument('-a','--setPage', metavar='setPage', type=str, default="/arduino4.php", help='page to set status')
+parser.add_argument('-f','--force', type=int, default=0, help='force orders to a given status code')
+parser.add_argument('-c','--printCopies', type=int, default=1, help='print this many copies of each receipt')
+parser.add_argument('-t','--testMode', type=int, default=0, help='set test mode to 1 to leave orders in unchanged state')
+parser.add_argument('-i','--havePrinter', type=int, default=1, help='set to 1 if you have a printer, 0 if not')
+parser.add_argument('-s','--server', default="87.51.52.114", help='address of server')
+parser.add_argument('-e','--securityCode', default="1234", help='security code for server')
+parser.add_argument('-q','--pollPage', default="/arduino1.php", help='page to poll for orders')
+parser.add_argument('-d','--detailPage', default="/arduino3.php", help='page to retrieve order details')
+parser.add_argument('-a','--setPage', default="/arduino4.php", help='page to set status')
+parser.add_argument('-n','--serialPort', default="/dev/ttyAMA0", help='serial port for printer')
+
+
 # note: Running with -h or --help prints the above info
 
 args = parser.parse_args()
 
-if args.poll: waitPollForOrders=args.poll
-if args.printCopies: printCopies = args.printCopies
+# special params
 
-# setup
+if args.force:
+    print "I don't know how to force status yet."
+else:
 
-#order = ""
-#orders = []
+    # set variables for the params
+    if args.poll:
+        waitPollForOrders=args.poll
+        print "waitPollForOrders "+str(waitPollForOrders)
+    if args.printCopies:
+        printCopies = args.printCopies
+        print "printCopies "+str(printCopies)
+    if args.testMode:
+        testMode = args.testMode
+        print "testMode "+str(testMode)
+    if args.havePrinter:
+        havePrinter = args.havePrinter
+        print "havePrinter "+str(havePrinter)
+    if args.server:
+        server = args.server
+        print "server "+server
+    if args.securityCode:
+        securityCode = args.securityCode
+        print "securityCode "+securityCode
+    if args.pollPage:
+        pollPage = args.pollPage
+        print "pollPage "+pollPage
+    if args.detailPage:
+        detailPage = args.detailPage
+        print "detailPage "+detailPage
+    if args.setPage:
+        setPage = args.setPage
+        print "setPage "+setPage
+    if args.serialPort:
+        serialPort = args.serialPort
+        print "serialPort "+serialPort
 
-# queue of orders received in polling that need to be printed
-ordersToPrint = Queue.Queue()
-# queue of orders that were printed that need to be set to status 'processing'
-ordersToConfirm = Queue.Queue();
+    # setup
+
+    if havePrinter:
+        try:
+            Epson = printer.Serial(serialPort)
+            Epson._raw('\x1b\x52\x04') # Set to Danish 1 character set, comment out for english.
+        except:
+            havePrinter = False
+            print "Failed to open serial port "+serialPort
+    else:
+        print "No printer"
+
+
+    #order = ""
+    #orders = []
+
+    # queue of orders received in polling that need to be printed
+    ordersToPrint = Queue.Queue()
+    # queue of orders that were printed that need to be set to status 'processing'
+    ordersToConfirm = Queue.Queue();
+
+# modules that do the work:
 
 # poll for orders, add any pending to queue for processing
 
@@ -168,7 +220,8 @@ def printOrders(ordersToPrint, ordersToConfirm):
 
                     if first: # don't try to parse control code from first text block because it doesn't have one
                         print textBlock
-                        if len(textBlock)>1: Epson._raw(textBlock.encode('utf-8')) # printer hates null strings
+                        if len(textBlock)>1:
+                            if havePrinter: Epson._raw(textBlock.encode('utf-8')) # printer hates null strings
                         first = False
                     else:
                         c = textBlock[0] # first character is formatting command
@@ -243,27 +296,25 @@ def confirmOrders(ordersToPrint, ordersToConfirm):
 
         ordersToConfirm.task_done()
 
-if args.reset:
-    print "Sorry, I don't know how to reset orders yet."
+# Now do the work:
 
-else:
-    if args.poll:
-        print "Starting polling"
+print "Starting polling"
 
-        pollWorker = Thread(target=pollForUpdates, args=(ordersToPrint, ordersToConfirm))
-        pollWorker.setDaemon(True)
-        pollWorker.start()
+pollWorker = Thread(target=pollForUpdates, args=(ordersToPrint, ordersToConfirm))
+pollWorker.setDaemon(True)
+pollWorker.start()
 
-        printWorker = Thread(target=printOrders, args=(ordersToPrint, ordersToConfirm))
-        printWorker.setDaemon(True)
-        printWorker.start()
+printWorker = Thread(target=printOrders, args=(ordersToPrint, ordersToConfirm))
+printWorker.setDaemon(True)
+printWorker.start()
 
-        confirmWorker = Thread(target=confirmOrders, args=(ordersToPrint, ordersToConfirm))
-        confirmWorker.setDaemon(True)
-        confirmWorker.start();
+confirmWorker = Thread(target=confirmOrders, args=(ordersToPrint, ordersToConfirm))
+confirmWorker.setDaemon(True)
+confirmWorker.start();
 
-        while True:
-            time.sleep(60)
-            #print "bored"
+while True:
+    time.sleep(60)
+    #print "bored"
 
 # sit back and relax while the workers work
+
