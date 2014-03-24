@@ -10,7 +10,12 @@ __author__ = 'laird'
 # uses requests from http://docs.python-requests.org/en/latest/user/install/#distribute-pip
 #
 # Todo:
-# - remove extended character substitution
+# - remove extended character substitution starting at line 203
+# - make client exit and restart on lost connection, maybe after 3 tries 5 mins apart write a error file of some kind? or send an mail?
+# - so far i manage by rebooting the pi every 24 hours just before shop opens
+# - make a parameter that forces all orders to a set status and then exit. Usefull to set orders as done each midnight
+# - as an alternative, make line 174 an parameter so it can be chosen what status to look for and just change what php file to use for lookup. Arduino2.php will list all orders processing and status in that one is 2 and not 1??
+# - of course the force option is most ideal i think, but then it would have to look in another file and not the default one...
 
 import logging
 import requests
@@ -33,7 +38,7 @@ securityCode = "1234" # Example security code
 pollPage = "/arduino1.php" # poll for orders
 detailPage = "/arduino3.php" # get text of receipt to print
 setPage = "/arduino4.php" # set status of an order. arduino4 notify the custome, arduino5 does not
-printCopies = 1 # number of copies, usefull to check if driver returns correct amount of cash
+printCopies = 2 # number of copies, usefull to check if driver returns correct amount of cash
 testMode = 0 # set to 1 to suppress setting order status (so can retest the same order)
 
 # Set to the serial port for your printer
@@ -46,7 +51,7 @@ serialPort = "/dev/ttyAMA0" # for GPIO
 try:
     buzzer = 15
     GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(buzzer, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(buzzer, GPIO.OUT, initial=GPIO.HIGH) # Initial high stat works with a PNP transistor driving a buzzer
 except NameError:
     print "No GPIO means no buzzer"
 
@@ -55,7 +60,7 @@ except NameError:
 waitPollForOrders = 30 # wait 30 seconds between polls
 printCopies = 1 # number of copies of receipt to print, uefull to check if driver returns the right amount of cash.
 maxNumToPrint = 5
-buzzerTime = 1 # buzz for one second
+buzzerTime = 3 # buzz for three second
 
 # parse command line arguments
 
@@ -271,9 +276,9 @@ def printOrders(ordersToPrint, ordersToConfirm):
 
         # and sound buzzer
 
-        GPIO.output(buzzer, GPIO.HIGH)
-        time.sleep(buzzerTime)
         GPIO.output(buzzer, GPIO.LOW)
+        time.sleep(buzzerTime)
+        GPIO.output(buzzer, GPIO.HIGH)
 
         ordersToConfirm.put(order) # if successful. if failed, add back to queue to print
         ordersToPrint.task_done()
