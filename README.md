@@ -100,7 +100,9 @@ Also the python script as it is now works fine, thou for some very odd reason it
 So the crontab will now look like this:
 
 0,15,30,45 14,15,16,17,18,19,20,21 * * * pkill -9 -f OSCommerceClient.py
+
 1,16,31,46 14,15,16,17,18,19,20,21 * * * python /home/pi/OSCommerceClient.py
+
 */10 * * * *   curl 'https://api.dns4e.com/v7/*******************.dns4e.net/a' --user '******apikey1*****************:*****************apikey2*****************' --data ''
 
 This will kill it at 14:00 and start it at 14:01, one hour before store opens, it will restart script every 15 mins until 21:46 where it will start it for the last time less than 15 mins before store closes.
@@ -112,9 +114,13 @@ Also the plan was for the script to set the orders to done once every 24 hours. 
 i simply run this copy of the script once every 24 hours at 1am. So the crontab ends out like this:
 
 0,15,30,45 14,15,16,17,18,19,20,21 * * * pkill -9 -f OSCommerceClient.py
+
 1,16,31,46 14,15,16,17,18,19,20,21 * * * python /home/pi/OSCommerceClient.py
+
 0 1 * * * python /home/pi/OSCommerceClient_1.py
+
 1 1 * * * pkill -9 -f OSCommerceClient_1.py
+
 */10 * * * *   curl 'https://api.dns4e.com/v7/*******************.dns4e.net/a' --user '******apikey1*****************:*****************apikey2*****************' --data ''
 
 a work in progress still, will update as we get along
