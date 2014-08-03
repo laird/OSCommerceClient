@@ -117,11 +117,11 @@ def pollForUpdates(ordersToPrint, ordersToConfirm):
 
                 logging.debug("processing order "+order);
                 vals = order.split();
-                if (len(vals) == 1):
+                if (len(vals) == 2):
                     orderNum = int(vals[0]);
                     status = int(vals[1]);
                     logging.debug("found order "+str(orderNum)+" status "+str(status)+",")
-                    if (status == 2):
+                    if (status == 1):
                         print "queue order %i to print." % orderNum
                         ordersToPrint.put(orderNum)
                     else:
@@ -153,9 +153,9 @@ def printOrders(ordersToPrint, ordersToConfirm):
 
             # replace non-ASCII characters
 
-            textResult = textResult.replace(u"▒^▒","AA")
-            textResult = textResult.replace(u"▒^▒","AE")
-            textResult = textResult.replace(u"▒^▒","OE")
+            textResult = textResult.replace(u"Å","AA")
+            textResult = textResult.replace(u"Æ","AE")
+            textResult = textResult.replace(u"Ø","OE")
             textResult = textResult.replace(u"å","aa")
             textResult = textResult.replace(u"æ","ae")
             textResult = textResult.replace(u"ø","oe")
