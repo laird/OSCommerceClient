@@ -47,7 +47,8 @@ cd python-escpos-1.0/
 python setup.py build
 sudo python setup.py install
 ------------------
-wget https://raw.github.com/laird/OSCommerceClient/8d304fdeaf8d44af90978ae7850c6005fa0f56fd/PythonClient/OSCommerceClient.py
+wget https://raw.githubusercontent.com/laird/OSCommerceClient/master/OSCommerceClient.py
+wget https://raw.githubusercontent.com/laird/OSCommerceClient/master/OSCommerceClient_1.py
 ------------------
 if you want Dynamic dns (good for remote access etc) i use the dns4e.com service
 
