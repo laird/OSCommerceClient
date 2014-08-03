@@ -3,11 +3,9 @@ OSCommerceClient
 
 Project with Bo
 
-
 This project creates an printer that can print out orders from oscommerce (oscommerce.com)
 
-
-It will pool a php file for a list of pending orders every 30 sec, if any it will print it on a thermal printer and set the status to processing, every 12 hours or so it will set them all to done, there is a free choice to let the customer know or not.
+It will pool a php file for a list of pending orders every 30 sec, if any it will print it on a thermal printer and set the status to processing, there is a free choice to let the customer know or not.
 
 Short Explanation of the PHP files:
 
@@ -53,7 +51,7 @@ wget https://raw.github.com/laird/OSCommerceClient/8d304fdeaf8d44af90978ae7850c6
 ------------------
 if you want Dynamic dns (good for remote access etc) i use the dns4e.com service
 
-crontab -e
+sudo crontab -e
 add: */10 * * * *   curl 'https://api.dns4e.com/v7/*******************.dns4e.net/a' --user '******apikey1*****************:*****************apikey2*****************' --data ''
 ------------------
 touch start.sh
@@ -84,6 +82,39 @@ The above disables boot messages on the serial line, thermal paper is not free :
 
 
 when you know its working then you can remove the # in the rc.local line
+
+
+UPDATE UPDATE UPDATE:
+---------------------
+
+So after about 6 months in service i have found that SD cards go bad in about...... yes 6 months. There are one way to prevent this and that is runnning read only mode.
+
+This guide is almost spot on: http://blog.gegg.us/2014/03/a-raspbian-read-only-root-fs-howto/
+
+in the 2nd apt get remove dont include cron
+dont do the insserv -r sudo line, sudo is used from time to time.
+
+Also the python script as it is now works fine, thou for some very odd reason it can hang, never figured why, but a dirty workaround is to kill it and restart it. I started out by restarting once every hour on the hour and it could still hang, then i did it every half hour and still, restarting every 15 mins made it work, only downside is that you have 4 mins spread evenly over an hour where it will not print orders, not a big deal at all.
+
+So the crontab will now look like this:
+
+0,15,30,45 14,15,16,17,18,19,20,21 * * * pkill -9 -f OSCommerceClient.py
+1,16,31,46 14,15,16,17,18,19,20,21 * * * python /home/pi/OSCommerceClient.py
+*/10 * * * *   curl 'https://api.dns4e.com/v7/*******************.dns4e.net/a' --user '******apikey1*****************:*****************apikey2*****************' --data ''
+
+This will kill it at 14:00 and start it at 14:01, one hour before store opens, it will restart script every 15 mins until 21:46 where it will start it for the last time less than 15 mins before store closes.
+
+As i said it can hang, not sure it will, but as this is headless and i did not have the time to do bug fix myself i just sorted to restarting it. 
+
+Also the plan was for the script to set the orders to done once every 24 hours. It never came do that so far and i wanted a quick way to do this. I simply made a copy of the script and changed it to look for files with order status 2 instead of 1. then i told it there is no printer attached to prevent it from printing. and i lastly used the arduino5 to set the status, no reason for the customer to get a mail about the pizza is done well after they have eaten it.
+
+i simply run this copy of the script once every 24 hours at 1am. So the crontab ends out like this:
+
+0,15,30,45 14,15,16,17,18,19,20,21 * * * pkill -9 -f OSCommerceClient.py
+1,16,31,46 14,15,16,17,18,19,20,21 * * * python /home/pi/OSCommerceClient.py
+0 1 * * * python /home/pi/OSCommerceClient_1.py
+1 1 * * * pkill -9 -f OSCommerceClient_1.py
+*/10 * * * *   curl 'https://api.dns4e.com/v7/*******************.dns4e.net/a' --user '******apikey1*****************:*****************apikey2*****************' --data ''
 
 a work in progress still, will update as we get along
 
