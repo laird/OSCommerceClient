@@ -41,17 +41,83 @@ $sql = sprintf("SELECT orders_id, date_purchased, delivery_name, delivery_street
 			   WHERE orders_id='%s'", (int)$_GET['o']); 
 $result = tep_db_query($sql);
 while($row = tep_db_fetch_array($result)){
-  echo "Ordrenummer: ".$row['orders_id'];
+  echo "Ordrenummer: "
+.$row['orders_id'];
   echo "[F";
   echo "[F";
   echo "Bestilt: ".$row['date_purchased'];
   echo "[F";
   echo "[F";
-  echo $row['delivery_name'];
+  
+
+
+$string = $row['delivery_name'];
+
+
+$patterns = array();
+$patterns[0] = 'å';
+$patterns[1] = 'æ';
+$patterns[2] = 'ø';
+$patterns[3] = 'Å';
+$patterns[4] = 'Æ';
+$patterns[5] = 'Ø';
+
+$replacements = array();
+$replacements[5] = '[a';
+$replacements[4] = '[e';
+$replacements[3] = '[o';
+$replacements[2] = '[A';
+$replacements[1] = '[E';
+$replacements[0] = '[O';
+
+echo str_replace($patterns, $replacements, $string);
+
+
+
   echo "[F";
-  echo $row['delivery_street_address'];
-  echo "[F";
-  echo $row['delivery_postcode'] . " " . $row['delivery_city'];
+ 
+  
+$string = $row['delivery_street_address'];
+
+$patterns = array();
+$patterns[0] = 'å';
+$patterns[1] = 'æ';
+$patterns[2] = 'ø';
+$patterns[3] = 'Å';
+$patterns[4] = 'Æ';
+$patterns[5] = 'Ø';
+
+$replacements = array();
+$replacements[5] = '[a';
+$replacements[4] = '[e';
+$replacements[3] = '[o';
+$replacements[2] = '[A';
+$replacements[1] = '[E';
+$replacements[0] = '[O';
+
+echo str_replace($patterns, $replacements, $string);
+
+echo "[F";
+  echo $row['delivery_postcode'] . " " ;
+
+$string = $row['delivery_city'];
+$patterns = array();
+$patterns[0] = 'å';
+$patterns[1] = 'æ';
+$patterns[2] = 'ø';
+$patterns[3] = 'Å';
+$patterns[4] = 'Æ';
+$patterns[5] = 'Ø';
+
+$replacements = array();
+$replacements[5] = '[a';
+$replacements[4] = '[e';
+$replacements[3] = '[o';
+$replacements[2] = '[A';
+$replacements[1] = '[E';
+$replacements[0] = '[O';
+
+echo str_replace($patterns, $replacements, $string);
   echo "[F";
 echo $row['customers_telephone'];
 echo "[F";
@@ -63,8 +129,29 @@ echo "[F";
 $sql1 = sprintf("SELECT orders_products_id, products_quantity, products_name FROM orders_products WHERE orders_id='%s'", (int)$_GET['o']);
 $result1 = tep_db_query($sql1);
 while($row1 = tep_db_fetch_array($result1)){
-  echo $row1['products_quantity']. " * " . $row1['products_name'];
+  echo $row1['products_quantity']. " * " ;
 
+  $string = $row1['products_name'];
+
+
+$patterns = array();
+$patterns[0] = 'å';
+$patterns[1] = 'æ';
+$patterns[2] = 'ø';
+$patterns[3] = 'Å';
+$patterns[4] = 'Æ';
+$patterns[5] = 'Ø';
+
+$replacements = array();
+$replacements[5] = '[a';
+$replacements[4] = '[e';
+$replacements[3] = '[o';
+$replacements[2] = '[A';
+$replacements[1] = '[E';
+$replacements[0] = '[O';
+
+echo str_replace($patterns, $replacements, $string);
+  
   $sql2 = sprintf("SELECT products_options_values FROM orders_products_attributes WHERE orders_id='%s' AND orders_products_id='%s'", (int)$_GET['o'], $row1['orders_products_id']);
 
   $result2 = tep_db_query($sql2);
@@ -96,35 +183,25 @@ echo "[F";
   echo " ";
   
   
-  
-  
-  
-  
-
-  
 $string = $row['text'];
 $patterns = array();
 $patterns[0] = '/<strong>/';
 $patterns[1] = '<<\/strong>>';
-$patterns[2] = '/fox/';
+$patterns[2] = '<<span class="productSpecialPrice">>';
+$patterns[3] = '<<\/span>>';  
+$patterns[4] = '/<b>/';
+$patterns[5] = '<<\/b>>';
+
+  
 $replacements = array();
-$replacements[2] = '[B';
-$replacements[1] = '[b';
-$replacements[0] = 'slow';
+$replacements[5] = '[B';
+$replacements[4] = '[b';
+$replacements[3] = '';
+$replacements[2] = '';
+$replacements[1] = '[B';
+$replacements[0] = '[b';
 echo preg_replace($patterns, $replacements, $string);
 
-  
-  
-
-  
-  
-  
-  
-
-
-  
-  
-  
   
   }
 echo "[F";
@@ -133,10 +210,46 @@ echo "[F";
 echo "------------------------------------------";
 
 echo "[F";
-$sql = sprintf("SELECT comments FROM orders_status_history WHERE orders_id='%s' AND orders_status_id=%s LIMIT 0, 1", (int)$_GET["o"], ID_ORDER_WAITING);
+$sql = sprintf("SELECT comments FROM orders_status_history WHERE orders_id='%s' AND orders_status_id=%s ", (int)$_GET["o"], ID_ORDER_WAITING);
 $result = tep_db_query($sql);
 while($row = tep_db_fetch_array($result)){
-  echo $row['comments'];
+  
+
+$string = $row['comments'];
+$patterns = array();
+$patterns[0] = 'å';
+$patterns[1] = 'æ';
+$patterns[2] = 'ø';
+$patterns[3] = 'Å';
+$patterns[4] = 'Æ';
+$patterns[5] = 'Ø';
+
+$patterns[6] = '´';
+$patterns[7] = '`';
+$patterns[8] = '|';
+$patterns[9] = '^';
+$patterns[10] = '¨';
+$patterns[11] = '~';
+$patterns[12] = '_';
+
+$replacements = array();
+$replacements[12] = '[a';
+$replacements[11] = '[e';
+$replacements[10] = '[o';
+$replacements[9] = '[A';
+$replacements[8] = '[E';
+$replacements[7] = '[O';
+
+$replacements[6] = '';
+$replacements[5] = '';
+$replacements[4] = '';
+$replacements[3] = '';
+$replacements[2] = '';
+$replacements[1] = '';
+$replacements[0] = '';
+
+echo str_replace($patterns, $replacements, $string);
+  echo "[F";
 }
 echo "[F";
 echo "------------------------------------------";
@@ -157,7 +270,7 @@ $result = tep_db_query($sql);
 while($row = tep_db_fetch_array($result)){
 echo "[F";
   
-  echo "[B"."[D"."BetalingsmÂde: ";
+  echo "[B"."[D"."Betalingsm[ade: ";
   
   echo $row['payment_method']."[b"."[d";
   
