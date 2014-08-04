@@ -62,18 +62,19 @@ buzzerTime = 3 # buzz for one second
 
 # parse command line arguments
 
-parser = argparse.ArgumentParser(description='This is the OSCommerce client by laird.', epilog="set either poll or$
-group = parser.add_mutually_exclusive_group()
-group.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help='poll for new orders')
-group.add_argument('-r','--reset', action='store_true', help='reset orders to pending')
-group.add_argument('-c','--copies', metavar='copies', type=int, default=1, help='print this many copies of each re$
-group.add_argument('-t','--test', metavar='store_true', type=int, default=0, help='set test mode to 1 to leave ord$
-group.add_argument('-i','--printer', metavar='havePrinter', type=int, default=1, help='set to 1 if you have a prin$
-group.add_argument('-s','--server', metavar='server', type=str, default="87.51.52.114", help='address of server')
-group.add_argument('-e','--securityCode', metavar='securityCode', type=str, default="1234", help='security code fo$
-group.add_argument('-q','--pollPage', metavar='pollPage', type=str, default="/arduino1.php", help='page to poll fo$
-group.add_argument('-d','--detailPage', metavar='detailPage', type=str, default="/arduino3.php", help='page to ret$
-group.add_argument('-a','--setPage', metavar='setPage', type=str, default="/arduino4.php", help='page to set statu$
+parser = argparse.ArgumentParser(description='This is the OSCommerce client by laird.', epilog="set either poll or reset, not both.")
+# group = parser.add_mutually_exclusive_group()
+parser.add_argument('-p','--poll', metavar='seconds', type=int, default=30, help='poll for new orders')
+parser.add_argument('-f','--force', type=int, default=0, help='force orders to a given status code')
+parser.add_argument('-c','--printCopies', type=int, default=1, help='print this many copies of each receipt')
+parser.add_argument('-t','--testMode', type=int, default=0, help='set test mode to 1 to leave orders in unchanged state')
+parser.add_argument('-i','--havePrinter', type=int, default=1, help='set to 1 if you have a printer, 0 if not')
+parser.add_argument('-s','--server', default="87.51.52.114", help='address of server')
+parser.add_argument('-e','--securityCode', default="1234", help='security code for server')
+parser.add_argument('-q','--pollPage', default="/arduino1.php", help='page to poll for orders')
+parser.add_argument('-d','--detailPage', default="/arduino3.php", help='page to retrieve order details')
+parser.add_argument('-a','--setPage', default="/arduino4.php", help='page to set status')
+parser.add_argument('-n','--serialPort', default="/dev/ttyAMA0", help='serial port for printer')
 # note: Running with -h or --help prints the above info
 
 args = parser.parse_args()
@@ -241,7 +242,7 @@ def confirmOrders(ordersToPrint, ordersToConfirm):
         if (not testMode):
             print "confirming order "+str(order)+"."
             url = "http://"+server+setPage;
-            payload = {'sc': securityCode, "o": order, "s":"finished"};
+            payload = {'sc': securityCode, "o": order, "s":"processing"};
             printResult = requests.get(url, params=payload);
 
         ordersToConfirm.task_done()
